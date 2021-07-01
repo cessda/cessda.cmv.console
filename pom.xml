@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>eu.cessda.cmv</groupId>
+    <artifactId>cmv-console</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>CESSDA Metadata Validator: Command Line Runner</name>
+    <url>https://cmv.cessda.eu/</url>
+
+    <organization>
+        <name>CESSDA ERIC</name>
+        <url>https://www.cessda.eu/</url>
+    </organization>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <!-- Validator -->
+        <dependency>
+            <groupId>eu.cessda.cmv</groupId>
+            <artifactId>cmv-core</artifactId>
+            <version>0.4.1</version>
+        </dependency>
+
+        <!-- JSON Encoder -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.12.3</version>
+        </dependency>
+
+        <!-- Configuration Parser -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.12.3</version>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>5.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.10.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+            </plugin>
+            <!--Docker Containerisation-->
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <to>
+                        <image>cessda/${project.artifactId}:${project.version}</image>
+                    </to>
+                    <container>
+                        <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+                    </container>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>cessda-nexus</id>
+            <name>CESSDA Nexus Repository</name>
+            <url>https://nexus.cessda.eu/repository/maven-releases</url>
+        </repository>
+    </repositories>
+
+</project>
