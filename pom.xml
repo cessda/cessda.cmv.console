@@ -23,7 +23,7 @@
 
     <groupId>eu.cessda.cmv</groupId>
     <artifactId>cmv-console</artifactId>
-    <version>${revision</version>
+    <version>${revision}</version>
     <name>CESSDA Metadata Validator: Command Line Runner</name>
     <url>https://cmv.cessda.eu/</url>
 
