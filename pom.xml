@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2017-2021 CESSDA ERIC (support@cessda.eu)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,7 +23,7 @@
 
     <groupId>eu.cessda.cmv</groupId>
     <artifactId>cmv-console</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>${revision</version>
     <name>CESSDA Metadata Validator: Command Line Runner</name>
     <url>https://cmv.cessda.eu/</url>
 
@@ -16,6 +33,8 @@
     </organization>
 
     <properties>
+        <buildNumber>SNAPSHOT</buildNumber>
+        <revision>1.0.0-${buildNumber}</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -64,10 +83,17 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.2.0</version>
             </plugin>
+            <!-- Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
+            </plugin>
+            <!-- SonarQube -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.7.0.1746</version>
             </plugin>
             <!--Docker Containerisation-->
             <plugin>
@@ -75,6 +101,9 @@
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.1.1</version>
                 <configuration>
+                    <from>
+                        <image>openjdk:11-jdk-slim</image>
+                    </from>
                     <to>
                         <image>cessda/${project.artifactId}:${project.version}</image>
                     </to>
@@ -82,6 +111,42 @@
                         <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
                     </container>
                 </configuration>
+            </plugin>
+            <!-- License Plugin -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>4.1</version>
+                <configuration>
+                    <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
+                    <properties>
+                        <owner>CESSDA ERIC</owner>
+                        <email>support@cessda.eu</email>
+                        <year>2017-2021</year>
+                    </properties>
+                    <excludes>
+                        <exclude>mvnw*</exclude>
+                        <exclude>.mvn/**</exclude>
+                        <exclude>.*</exclude>
+                        <exclude>Jenkinsfile</exclude>
+                        <exclude>LICENSE.txt</exclude>
+                        <exclude>**/README</exclude>
+                        <exclude>**/.m2/**</exclude>
+                        <exclude>lombok.config</exclude>
+                        <exclude>src/test/resources/**</exclude>
+                        <exclude>src/main/resources/**</exclude>
+                    </excludes>
+                    <mapping>
+                        <java>PHP</java>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
