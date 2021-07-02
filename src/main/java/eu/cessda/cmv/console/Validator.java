@@ -79,15 +79,19 @@ public class Validator {
     private static Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
         return Files.walk(documentPath).filter(file -> !Files.isDirectory(file))
             .map(Path::normalize)
-            .map(file -> {
+            .flatMap(file -> {
                 log.debug("Validating {} with profile {}.", file, profile);
 
                 var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
                 var document = Resource.newResource(file.toFile());
 
-                ValidationReportV0 validationReport = validationService.validate(document, profile, ValidationGateName.BASIC);
-
-                return Map.entry(fileName, validationReport);
+                try {
+                    ValidationReportV0 validationReport = validationService.validate(document, profile, ValidationGateName.BASIC);
+                    return Stream.of(Map.entry(fileName, validationReport));
+                } catch (RuntimeException e) {
+                    log.warn("Validation of {} failed", file, e);
+                    return Stream.empty();
+                }
             });
     }
 
