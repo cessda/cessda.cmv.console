@@ -15,6 +15,7 @@
  */
 package eu.cessda.cmv.console;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import eu.cessda.cmv.core.CessdaMetadataValidatorFactory;
@@ -30,11 +31,11 @@ import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static net.logstash.logback.argument.StructuredArguments.keyValue;
 import static net.logstash.logback.argument.StructuredArguments.raw;
+import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 public class Validator {
@@ -55,15 +56,22 @@ public class Validator {
             var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory());
 
             var collect = validateDocuments(profile, sourceDirectory);
-            var json = new ObjectMapper().writeValueAsString(collect);
-            log.info("{}: Validation Results: {}",
-                keyValue("repo_name", repo.getCode()),
-                raw("validation_results", json)
-            );
+            collect.forEach(report -> {
+                try {
+                    var json = new ObjectMapper().writeValueAsString(report);
+                    log.info("{}: {}: Validation Results: {}",
+                        value("repo_name", repo.getCode()),
+                        value("oai_record", report.getKey()),
+                        raw("validation_results", json)
+                    );
+                } catch (JsonProcessingException e) {
+                    log.error("{}: Failed to write report for {}", repo.getCode(), report.getKey());
+                }
+            });
         }
     }
 
-    private static Map<String, ValidationReportV0> validateDocuments(Resource profile, Path documentPath) throws IOException {
+    private static Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
         try (var sourceFiles = Files.walk(documentPath)) {
             return sourceFiles.filter(file -> !Files.isDirectory(file))
                 .map(Path::normalize)
@@ -76,7 +84,7 @@ public class Validator {
                     ValidationReportV0 validationReport = validationService.validate(document, profile, ValidationGateName.BASIC);
 
                     return Map.entry(fileName, validationReport);
-                }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                });
         }
     }
 
