@@ -43,7 +43,12 @@ public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
 
-    private static final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
+    private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
+    private final Configuration configuration;
+
+    public Validator(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     public static void main(String[] args) throws IOException, InterruptedException {
         log.info("Starting validator.");
@@ -52,6 +57,11 @@ public class Validator {
 
         var configuration = parseConfiguration();
 
+        // Instance and run the validator
+        new Validator(configuration).validate();
+    }
+
+    private void validate() throws IOException {
         for (var repo : configuration.getRepositories()) {
             log.info("{}: Performing validation.", repo.getCode());
 
@@ -76,7 +86,7 @@ public class Validator {
         }
     }
 
-    private static Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
+    private Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
         return Files.walk(documentPath).filter(file -> !Files.isDirectory(file))
             .map(Path::normalize)
             .flatMap(file -> {
