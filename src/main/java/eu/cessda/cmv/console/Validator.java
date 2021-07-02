@@ -59,37 +59,36 @@ public class Validator {
 
             var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory());
 
-            var collect = validateDocuments(profile, sourceDirectory);
-            collect.forEach(report -> {
-                try {
-                    var json = new ObjectMapper().writeValueAsString(report);
-                    log.info("{}: {}: Validation Results: {}.",
-                        value("repo_name", repo.getCode()),
-                        value("oai_record", report.getKey()),
-                        raw("validation_results", json)
-                    );
-                } catch (JsonProcessingException e) {
-                    log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
-                }
-            });
+            try (var collect = validateDocuments(profile, sourceDirectory)) {
+                collect.forEach(report -> {
+                    try {
+                        var json = new ObjectMapper().writeValueAsString(report);
+                        log.info("{}: {}: Validation Results: {}.",
+                            value("repo_name", repo.getCode()),
+                            value("oai_record", report.getKey()),
+                            raw("validation_results", json)
+                        );
+                    } catch (JsonProcessingException e) {
+                        log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
+                    }
+                });
+            }
         }
     }
 
     private static Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
-        try (var sourceFiles = Files.walk(documentPath)) {
-            return sourceFiles.filter(file -> !Files.isDirectory(file))
-                .map(Path::normalize)
-                .map(file -> {
-                    log.debug("Validating {} with profile {}.", file, profile);
+        return Files.walk(documentPath).filter(file -> !Files.isDirectory(file))
+            .map(Path::normalize)
+            .map(file -> {
+                log.debug("Validating {} with profile {}.", file, profile);
 
-                    var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
-                    var document = Resource.newResource(file.toFile());
+                var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
+                var document = Resource.newResource(file.toFile());
 
-                    ValidationReportV0 validationReport = validationService.validate(document, profile, ValidationGateName.BASIC);
+                ValidationReportV0 validationReport = validationService.validate(document, profile, ValidationGateName.BASIC);
 
-                    return Map.entry(fileName, validationReport);
-                });
-        }
+                return Map.entry(fileName, validationReport);
+            });
     }
 
     private static Configuration parseConfiguration() throws IOException {
