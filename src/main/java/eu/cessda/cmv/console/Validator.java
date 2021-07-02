@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -44,12 +45,15 @@ public class Validator {
 
     private static final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        log.info("Starting validator.");
+
+        Thread.sleep(Duration.ofSeconds(5).toMillis());
 
         var configuration = parseConfiguration();
 
         for (var repo : configuration.getRepositories()) {
-            log.info("{}: Performing validation", repo.getCode());
+            log.info("{}: Performing validation.", repo.getCode());
 
             var profile = Resource.newResource(repo.getProfile());
 
@@ -59,13 +63,13 @@ public class Validator {
             collect.forEach(report -> {
                 try {
                     var json = new ObjectMapper().writeValueAsString(report);
-                    log.info("{}: {}: Validation Results: {}",
+                    log.info("{}: {}: Validation Results: {}.",
                         value("repo_name", repo.getCode()),
                         value("oai_record", report.getKey()),
                         raw("validation_results", json)
                     );
                 } catch (JsonProcessingException e) {
-                    log.error("{}: Failed to write report for {}", repo.getCode(), report.getKey());
+                    log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
                 }
             });
         }
@@ -76,7 +80,7 @@ public class Validator {
             return sourceFiles.filter(file -> !Files.isDirectory(file))
                 .map(Path::normalize)
                 .map(file -> {
-                    log.debug("Validating {} with profile {}", file, profile);
+                    log.debug("Validating {} with profile {}.", file, profile);
 
                     var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
                     var document = Resource.newResource(file.toFile());
