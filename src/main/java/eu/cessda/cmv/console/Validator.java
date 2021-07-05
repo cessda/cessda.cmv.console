@@ -61,13 +61,13 @@ public class Validator {
         new Validator(configuration).validate();
     }
 
-    private void validate() throws IOException {
+    private void validate() {
         for (var repo : configuration.getRepositories()) {
             log.info("{}: Performing validation.", repo.getCode());
 
             var profile = Resource.newResource(repo.getProfile());
 
-            var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory());
+            var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory()).normalize();
 
             try (var collect = validateDocuments(profile, sourceDirectory)) {
                 collect.forEach(report -> {
@@ -82,13 +82,15 @@ public class Validator {
                         log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
                     }
                 });
+            } catch (IOException e) {
+                log.error("Failed to harvest {}: {}", repo.getCode(), e.toString());
             }
         }
     }
 
+    @SuppressWarnings("resource") // Closed in the calling method
     private Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
         return Files.walk(documentPath).filter(file -> !Files.isDirectory(file))
-            .map(Path::normalize)
             .flatMap(file -> {
                 log.debug("Validating {} with profile {}.", file, profile);
 
