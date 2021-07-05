@@ -61,15 +61,15 @@ public class Validator {
         new Validator(configuration).validate();
     }
 
-    private void validate() {
+    private void validate() throws IOException {
         for (var repo : configuration.getRepositories()) {
             log.info("{}: Performing validation.", repo.getCode());
 
-            var profile = Resource.newResource(repo.getProfile());
+            var profile = Resource.newResource(repo.getProfile().toURL().openStream());
 
             var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory()).normalize();
 
-            try (var collect = validateDocuments(profile, sourceDirectory)) {
+            try (var collect = validateDocuments(profile, sourceDirectory, repo.getValidationGate())) {
                 collect.forEach(report -> {
                     try {
                         var json = new ObjectMapper().writeValueAsString(report);
@@ -89,7 +89,9 @@ public class Validator {
     }
 
     @SuppressWarnings("resource") // Closed in the calling method
-    private Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(Resource profile, Path documentPath) throws IOException {
+    private Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(
+        Resource profile, Path documentPath, ValidationGateName validationGate
+    ) throws IOException {
         return Files.walk(documentPath).filter(file -> !Files.isDirectory(file))
             .flatMap(file -> {
                 log.debug("Validating {} with profile {}.", file, profile);
@@ -98,7 +100,7 @@ public class Validator {
                 var document = Resource.newResource(file.toFile());
 
                 try {
-                    ValidationReportV0 validationReport = validationService.validate(document, profile, ValidationGateName.BASIC);
+                    ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
                     return Stream.of(Map.entry(fileName, validationReport));
                 } catch (RuntimeException e) {
                     log.warn("Validation of {} failed", file, e);
