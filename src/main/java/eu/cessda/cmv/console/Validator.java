@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -61,52 +62,63 @@ public class Validator {
         new Validator(configuration).validate();
     }
 
-    private void validate() throws IOException {
+    private void validate() {
         for (var repo : configuration.getRepositories()) {
             log.info("{}: Performing validation.", repo.getCode());
 
-            var profile = Resource.newResource(repo.getProfile().toURL().openStream());
-
             var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory()).normalize();
 
-            try (var collect = validateDocuments(profile, sourceDirectory, repo.getValidationGate())) {
-                collect.forEach(report -> {
-                    try {
-                        var json = new ObjectMapper().writeValueAsString(report);
-                        log.info("{}: {}: Validation Results: {}.",
-                            value("repo_name", repo.getCode()),
-                            value("oai_record", report.getKey()),
-                            raw("validation_results", json)
-                        );
-                    } catch (JsonProcessingException e) {
-                        log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
-                    }
-                });
+            try (var sourceFilesStream = Files.walk(sourceDirectory)) {
+                var profile = Resource.newResource(repo.getProfile().toURL().openStream());
+
+                sourceFilesStream.filter(file -> !Files.isDirectory(file))
+                    .collect(Collectors.toList())
+                    .parallelStream()
+                    .flatMap(file -> {
+                        try {
+                            return Stream.of(validateDocuments(file, profile, repo.getValidationGate()));
+                        } catch (RuntimeException e) {
+                            log.warn("Validation of {} failed", file, e);
+                            return Stream.empty();
+                        }
+                    })
+                    .forEach(report -> {
+                        try {
+                            var json = new ObjectMapper().writeValueAsString(report);
+                            log.info("{}: {}: Validation Results: {}.",
+                                value("repo_name", repo.getCode()),
+                                value("oai_record", report.getKey()),
+                                raw("validation_results", json)
+                            );
+                        } catch (JsonProcessingException e) {
+                            log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
+                        }
+                    });
             } catch (IOException e) {
                 log.error("Failed to harvest {}: {}", repo.getCode(), e.toString());
             }
         }
     }
 
-    @SuppressWarnings("resource") // Closed in the calling method
-    private Stream<Map.Entry<String, ValidationReportV0>> validateDocuments(
-        Resource profile, Path documentPath, ValidationGateName validationGate
-    ) throws IOException {
-        return Files.walk(documentPath).filter(file -> !Files.isDirectory(file))
-            .flatMap(file -> {
-                log.debug("Validating {} with profile {}.", file, profile);
+    /**
+     * Validate the given document using the specified profile and validation gate.
+     *
+     * @param documentPath   the document to validate.
+     * @param profile        the profile to validate with.
+     * @param validationGate the {@link ValidationGateName} to use.
+     * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation result.
+     * @throws RuntimeException if an error occurs during the validation.
+     */
+    private Map.Entry<String, ValidationReportV0> validateDocuments(
+        Path documentPath, Resource profile, ValidationGateName validationGate
+    ) {
+        log.debug("Validating {} with profile {}.", documentPath, profile);
 
-                var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
-                var document = Resource.newResource(file.toFile());
+        var fileName = URLDecoder.decode(removeExtension(documentPath.getFileName().toString()), UTF_8);
+        var document = Resource.newResource(documentPath.toFile());
 
-                try {
-                    ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
-                    return Stream.of(Map.entry(fileName, validationReport));
-                } catch (RuntimeException e) {
-                    log.warn("Validation of {} failed", file, e);
-                    return Stream.empty();
-                }
-            });
+        ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
+        return Map.entry(fileName, validationReport);
     }
 
     private static Configuration parseConfiguration() throws IOException {
