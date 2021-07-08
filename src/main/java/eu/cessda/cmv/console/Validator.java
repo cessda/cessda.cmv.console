@@ -17,7 +17,7 @@ package eu.cessda.cmv.console;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import eu.cessda.cmv.core.CessdaMetadataValidatorFactory;
 import eu.cessda.cmv.core.ValidationGateName;
 import eu.cessda.cmv.core.ValidationService;
@@ -46,9 +46,11 @@ public class Validator {
 
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final Configuration configuration;
+    private final ObjectMapper objectMapper;
 
     public Validator(Configuration configuration) {
         this.configuration = configuration;
+        this.objectMapper = new ObjectMapper();
     }
 
     public static void main(String[] args) throws IOException {
@@ -79,7 +81,7 @@ public class Validator {
      * @throws IOException if an IO error occurs when reading the configuration.
      */
     private static Configuration parseConfiguration() throws IOException {
-        var mapper = new ObjectMapper(new YAMLFactory());
+        var mapper = new YAMLMapper();
 
         return mapper.readValue(
             Validator.class.getClassLoader().getResourceAsStream("configuration.yaml"),
@@ -102,7 +104,7 @@ public class Validator {
         log.debug("Validating {} with profile {}.", documentPath, profile);
 
         var fileName = URLDecoder.decode(removeExtension(documentPath.getFileName().toString()), UTF_8);
-        var document = Resource.newResource(documentPath.toFile());
+        var document = Resource.newResource(documentPath.toUri());
 
         ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
         return Map.entry(fileName, validationReport);
@@ -121,7 +123,7 @@ public class Validator {
                 var profile = Resource.newResource(repo.getProfile().toURL().openStream());
 
                 sourceFilesStream.filter(file -> !Files.isDirectory(file))
-                    .collect(Collectors.toList())
+                    .collect(Collectors.toList()) // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
                     .flatMap(file -> {
                         try {
@@ -133,7 +135,7 @@ public class Validator {
                     })
                     .forEach(report -> {
                         try {
-                            var json = new ObjectMapper().writeValueAsString(report);
+                            var json = objectMapper.writeValueAsString(report);
                             log.info("{}: {}: {}: Validation Results: {}.",
                                 value("repo_name", repo.getCode()),
                                 value("validation_gate", repo.getValidationGate()),
