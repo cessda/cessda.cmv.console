@@ -74,6 +74,41 @@ public class Validator {
     }
 
     /**
+     * Parse configuration from {@code configuration.yaml}.
+     *
+     * @throws IOException if an IO error occurs when reading the configuration.
+     */
+    private static Configuration parseConfiguration() throws IOException {
+        var mapper = new ObjectMapper(new YAMLFactory());
+
+        return mapper.readValue(
+            Validator.class.getClassLoader().getResourceAsStream("configuration.yaml"),
+            Configuration.class
+        );
+    }
+
+    /**
+     * Validate the given document using the specified profile and validation gate.
+     *
+     * @param documentPath   the document to validate.
+     * @param profile        the profile to validate with.
+     * @param validationGate the {@link ValidationGateName} to use.
+     * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation result.
+     * @throws RuntimeException if an error occurs during the validation.
+     */
+    private Map.Entry<String, ValidationReportV0> validateDocuments(
+        Path documentPath, Resource profile, ValidationGateName validationGate
+    ) {
+        log.debug("Validating {} with profile {}.", documentPath, profile);
+
+        var fileName = URLDecoder.decode(removeExtension(documentPath.getFileName().toString()), UTF_8);
+        var document = Resource.newResource(documentPath.toFile());
+
+        ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
+        return Map.entry(fileName, validationReport);
+    }
+
+    /**
      * Validate all configured repositories.
      */
     private void validate() {
@@ -99,8 +134,9 @@ public class Validator {
                     .forEach(report -> {
                         try {
                             var json = new ObjectMapper().writeValueAsString(report);
-                            log.info("{}: {}: Validation Results: {}.",
+                            log.info("{}: {}: {}: Validation Results: {}.",
                                 value("repo_name", repo.getCode()),
+                                value("validation_gate", repo.getValidationGate()),
                                 value("oai_record", report.getKey()),
                                 raw("validation_results", json)
                             );
@@ -112,35 +148,5 @@ public class Validator {
                 log.error("Failed to validate {}: {}", repo.getCode(), e.toString());
             }
         }
-    }
-
-    /**
-     * Validate the given document using the specified profile and validation gate.
-     *
-     * @param documentPath   the document to validate.
-     * @param profile        the profile to validate with.
-     * @param validationGate the {@link ValidationGateName} to use.
-     * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation result.
-     * @throws RuntimeException if an error occurs during the validation.
-     */
-    private Map.Entry<String, ValidationReportV0> validateDocuments(
-        Path documentPath, Resource profile, ValidationGateName validationGate
-    ) {
-        log.debug("Validating {} with profile {}.", documentPath, profile);
-
-        var fileName = URLDecoder.decode(removeExtension(documentPath.getFileName().toString()), UTF_8);
-        var document = Resource.newResource(documentPath.toFile());
-
-        ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
-        return Map.entry(fileName, validationReport);
-    }
-
-    private static Configuration parseConfiguration() throws IOException {
-        var mapper = new ObjectMapper(new YAMLFactory());
-
-        return mapper.readValue(
-            Validator.class.getClassLoader().getResourceAsStream("configuration.yaml"),
-            Configuration.class
-        );
     }
 }
