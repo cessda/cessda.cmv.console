@@ -34,6 +34,7 @@
 ehthumbs.db
 Thumbs.db
 
+input/
 target/
 !.mvn/wrapper/maven-wrapper.jar
 

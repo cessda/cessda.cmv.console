@@ -1,4 +1,4 @@
-rootDirectory: /validator/unwrapped/
+rootDirectory: ./input/
 repositories:
   - code: UKDS
     directory: ./UKDS/ddi/

@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,17 +51,31 @@ public class Validator {
         this.configuration = configuration;
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         log.info("Starting validator.");
 
-        Thread.sleep(Duration.ofSeconds(5).toMillis());
-
         var configuration = parseConfiguration();
+
+        // Allow the base path to be configurable as a program argument
+        if (args.length > 0) {
+            Path baseDirectory;
+            try {
+                baseDirectory = Path.of(args[0]);
+            } catch (InvalidPathException e) {
+                log.error("Parsing base directory failed: {}", e.getMessage());
+                System.exit(1);
+                return;
+            }
+            configuration = new Configuration(baseDirectory, configuration.getRepositories());
+        }
 
         // Instance and run the validator
         new Validator(configuration).validate();
     }
 
+    /**
+     * Validate all configured repositories.
+     */
     private void validate() {
         for (var repo : configuration.getRepositories()) {
             log.info("{}: Performing validation.", repo.getCode());
@@ -95,7 +109,7 @@ public class Validator {
                         }
                     });
             } catch (IOException e) {
-                log.error("Failed to harvest {}: {}", repo.getCode(), e.toString());
+                log.error("Failed to validate {}: {}", repo.getCode(), e.toString());
             }
         }
     }
