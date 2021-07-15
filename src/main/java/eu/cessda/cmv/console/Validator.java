@@ -31,7 +31,6 @@ import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -143,7 +142,7 @@ public class Validator {
                                 value("repo_name", repo.getCode()),
                                 value("validation_gate", repo.getValidationGate()),
                                 value("oai_record", report.getKey()),
-                                raw("validation_results", json)
+                                value("validation_results", json)
                             );
                         } catch (JsonProcessingException e) {
                             log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
