@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static net.logstash.logback.argument.StructuredArguments.raw;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
@@ -53,10 +52,8 @@ public class Validator {
         this.objectMapper = new ObjectMapper();
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         log.info("Starting validator.");
-
-        Thread.sleep(Duration.ofSeconds(5).toMillis());
 
         var configuration = parseConfiguration();
 
