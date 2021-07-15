@@ -31,6 +31,7 @@ import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,8 +54,10 @@ public class Validator {
         this.objectMapper = new ObjectMapper();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         log.info("Starting validator.");
+
+        Thread.sleep(Duration.ofSeconds(5).toMillis());
 
         var configuration = parseConfiguration();
 
