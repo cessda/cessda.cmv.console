@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.logstash.logback.argument.StructuredArguments.raw;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
@@ -134,12 +135,12 @@ public class Validator {
                     })
                     .forEach(report -> {
                         try {
-                            var json = objectMapper.writeValueAsString(report);
-                            log.info("{}: {}: {}: Validation Results: {}.",
+                            var json = objectMapper.writeValueAsString(report.getValue());
+                            log.info("{}: {}: {}: {}.",
                                 value("repo_name", repo.getCode()),
                                 value("validation_gate", repo.getValidationGate()),
                                 value("oai_record", report.getKey()),
-                                value("validation_results", json)
+                                raw("validation_results", json)
                             );
                         } catch (JsonProcessingException e) {
                             log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
