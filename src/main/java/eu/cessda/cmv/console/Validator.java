@@ -128,8 +128,9 @@ public class Validator {
                     .flatMap(file -> {
                         try {
                             return Stream.of(validateDocuments(file, profile, repo.getValidationGate()));
-                        } catch (RuntimeException e) {
-                            log.warn("Validation of {} failed", file, e);
+                        } catch (RuntimeException | OutOfMemoryError e) {
+                            // Handle unexpected exceptions and out of memory errors
+                            log.error("{}: Validation of {} failed", repo.getCode(), file, e);
                             return Stream.empty();
                         }
                     })
