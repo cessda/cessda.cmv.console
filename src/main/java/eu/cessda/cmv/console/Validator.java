@@ -25,12 +25,14 @@ import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
 import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +45,7 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
+    private static final String MDC_KEY = "validator_job";
 
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final Configuration configuration;
@@ -72,7 +75,9 @@ public class Validator {
         }
 
         // Instance and run the validator
-        new Validator(configuration).validate();
+        var timestamp = OffsetDateTime.now().toString();
+        MDC.put(MDC_KEY, timestamp);
+        new Validator(configuration).validate(timestamp);
     }
 
     /**
@@ -113,7 +118,7 @@ public class Validator {
     /**
      * Validate all configured repositories.
      */
-    private void validate() {
+    private void validate(String timestamp) {
         for (var repo : configuration.getRepositories()) {
             log.info("{}: Performing validation.", repo.getCode());
 
@@ -126,6 +131,7 @@ public class Validator {
                     .collect(Collectors.toList()) // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
                     .flatMap(file -> {
+                        MDC.put(MDC_KEY, timestamp);
                         try {
                             return Stream.of(validateDocuments(file, profile, repo.getValidationGate()));
                         } catch (RuntimeException | OutOfMemoryError e) {
@@ -135,6 +141,7 @@ public class Validator {
                         }
                     })
                     .forEach(report -> {
+                        MDC.put(MDC_KEY, timestamp);
                         try {
                             var json = objectMapper.writeValueAsString(report.getValue());
                             log.info("{}: {}: {}: {}.",
