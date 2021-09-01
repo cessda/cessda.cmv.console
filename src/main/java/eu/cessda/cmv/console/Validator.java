@@ -86,9 +86,7 @@ public class Validator {
      * @throws IOException if an IO error occurs when reading the configuration.
      */
     private static Configuration parseConfiguration() throws IOException {
-        var mapper = new YAMLMapper();
-
-        return mapper.readValue(
+        return new YAMLMapper().readValue(
             Validator.class.getClassLoader().getResourceAsStream("configuration.yaml"),
             Configuration.class
         );
@@ -127,7 +125,7 @@ public class Validator {
             try (var sourceFilesStream = Files.walk(sourceDirectory)) {
                 var profile = Resource.newResource(repo.getProfile().toURL().openStream());
 
-                sourceFilesStream.filter(file -> !Files.isDirectory(file))
+                sourceFilesStream.filter(Files::isRegularFile)
                     .collect(Collectors.toList()) // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
                     .flatMap(file -> {
@@ -144,8 +142,9 @@ public class Validator {
                         MDC.put(MDC_KEY, timestamp);
                         try {
                             var json = objectMapper.writeValueAsString(report.getValue());
-                            log.info("{}: {}: {}: {}.",
+                            log.info("{}: {}: {}: {}: {}.",
                                 value("repo_name", repo.getCode()),
+                                value("profile_name", repo.getProfile()),
                                 value("validation_gate", repo.getValidationGate()),
                                 value("oai_record", report.getKey()),
                                 raw("validation_results", json)
