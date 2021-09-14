@@ -129,8 +129,8 @@ public class Validator {
                     .collect(Collectors.toList()) // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
                     .flatMap(file -> {
-                        MDC.put(MDC_KEY, timestamp);
                         try {
+                            MDC.put(MDC_KEY, timestamp);
                             return Stream.of(validateDocuments(file, profile, repo.getValidationGate()));
                         } catch (RuntimeException | OutOfMemoryError e) {
                             // Handle unexpected exceptions and out of memory errors
@@ -139,8 +139,8 @@ public class Validator {
                         }
                     })
                     .forEach(report -> {
-                        MDC.put(MDC_KEY, timestamp);
                         try {
+                            MDC.put(MDC_KEY, timestamp);
                             var json = objectMapper.writeValueAsString(report.getValue());
                             log.info("{}: {}: {}: {}: {}.",
                                 value("repo_name", repo.getCode()),
@@ -149,11 +149,11 @@ public class Validator {
                                 value("oai_record", report.getKey()),
                                 raw("validation_results", json)
                             );
-                        } catch (JsonProcessingException e) {
-                            log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey());
+                        } catch (JsonProcessingException | OutOfMemoryError e) {
+                            log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey(), e);
                         }
                     });
-            } catch (IOException e) {
+            } catch (IOException | OutOfMemoryError e) {
                 log.error("Failed to validate {}: {}", repo.getCode(), e.toString());
             }
         }
