@@ -21,7 +21,7 @@ repositories:
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: SND
-    directory: ./SND/oai_ddi25/
+    directory: ./SND/subject:social-sciences/oai_ddi25/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: DANS
@@ -29,26 +29,34 @@ repositories:
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: AUSSDA
-    directory: ./AUSSDA/
+    directory: ./AUSSDA/oai_ddi/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/1.0.4/profile-mono.xml
     validationGate: BASIC
   - code: ADP
-    directory: ./ADP/
+    directory: ./ADP/oai_ddi25/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: NSD
-    directory: ./NSD/
+    directory: ./NSD/oai_ddi/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
     validationGate: BASIC
   - code: ProgedoSciencesPo
-    directory: ./ProgedoSciencesPo/
+    directory: ./ProgedoSciencesPo/oai_ddi/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: UniData
-    directory: ./UniData/
+    directory: ./UniData/oai_ddi/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
     validationGate: BASIC
   - code: CSDA
-    directory: ./CSDA/
+    directory: ./CSDA/oai_ddi/
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
+    validationGate: BASIC
+  - code: SASD
+    directory: ./SASD/oai_ddi25/
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    validationGate: BASIC
+  - code: SoDaNet
+    directory: ./SoDaNet/CESSDA/oai_ddi/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
     validationGate: BASIC
