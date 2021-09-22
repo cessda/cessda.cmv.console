@@ -2,7 +2,6 @@ rootDirectory: ./input/
 repositories:
   - code: UKDS
     directory: ./UKDS/ddi/
-    # Will be set to CMV production when released.
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: DNA
@@ -31,7 +30,7 @@ repositories:
     validationGate: BASIC
   - code: AUSSDA
     directory: ./AUSSDA/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/1.0.4/profile-mono.xml
     validationGate: BASIC
   - code: ADP
     directory: ./ADP/
