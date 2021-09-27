@@ -21,7 +21,7 @@ repositories:
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: SND
-    directory: ./SND/subject:social-sciences/oai_ddi25/
+    directory: ./SND/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: DANS
