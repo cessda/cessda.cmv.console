@@ -36,8 +36,8 @@
         <buildNumber>SNAPSHOT</buildNumber>
         <revision>1.0.0-${buildNumber}</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -107,7 +107,7 @@
                 <version>3.1.4</version>
                 <configuration>
                     <from>
-                        <image>openjdk:17-jdk-slim</image>
+                        <image>openjdk:11-jdk-slim</image>
                     </from>
                     <to>
                         <image>cessda/${project.artifactId}:${project.version}</image>

@@ -33,7 +33,7 @@ pipeline {
 		stage('Pull SDK Docker Image') {
 		    agent {
 		        docker {
-                    image 'openjdk:17-jdk'
+                    image 'openjdk:11-jdk'
                     reuseNode true
                 }
             }
