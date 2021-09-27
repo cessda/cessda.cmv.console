@@ -15,6 +15,7 @@
 pipeline {
 	options {
 		buildDiscarder logRotator(artifactNumToKeepStr: '5', numToKeepStr: '20')
+        timeout(time: 1, unit: 'HOURS')
 	}
 
 	environment {
