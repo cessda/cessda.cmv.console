@@ -34,7 +34,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -71,7 +70,7 @@ public class Validator {
                 System.exit(1);
                 return;
             }
-            configuration = new Configuration(baseDirectory, configuration.getRepositories());
+            configuration = new Configuration(baseDirectory, configuration.repositories());
         }
 
         // Instance and run the validator
@@ -117,24 +116,24 @@ public class Validator {
      * Validate all configured repositories.
      */
     private void validate(String timestamp) {
-        for (var repo : configuration.getRepositories()) {
-            log.info("{}: Performing validation.", repo.getCode());
+        for (var repo : configuration.repositories()) {
+            log.info("{}: Performing validation.", repo.code());
 
-            var sourceDirectory = configuration.getRootDirectory().resolve(repo.getDirectory()).normalize();
+            var sourceDirectory = configuration.rootDirectory().resolve(repo.directory()).normalize();
 
             try (var sourceFilesStream = Files.walk(sourceDirectory)) {
-                var profile = Resource.newResource(repo.getProfile().toURL().openStream());
+                var profile = Resource.newResource(repo.profile().toURL().openStream());
 
                 sourceFilesStream.filter(Files::isRegularFile)
-                    .collect(Collectors.toList()) // Collecting to a list allows better parallelisation behavior as the overall size is known
+                    .toList() // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
                     .flatMap(file -> {
                         try {
                             MDC.put(MDC_KEY, timestamp);
-                            return Stream.of(validateDocuments(file, profile, repo.getValidationGate()));
+                            return Stream.of(validateDocuments(file, profile, repo.validationGate()));
                         } catch (RuntimeException | OutOfMemoryError e) {
                             // Handle unexpected exceptions and out of memory errors
-                            log.error("{}: Validation of {} failed", repo.getCode(), file, e);
+                            log.error("{}: Validation of {} failed", repo.code(), file, e);
                             return Stream.empty();
                         }
                     })
@@ -143,18 +142,18 @@ public class Validator {
                             MDC.put(MDC_KEY, timestamp);
                             var json = objectMapper.writeValueAsString(report.getValue());
                             log.info("{}: {}: {}: {}: {}.",
-                                value("repo_name", repo.getCode()),
-                                value("profile_name", repo.getProfile()),
-                                value("validation_gate", repo.getValidationGate()),
+                                value("repo_name", repo.code()),
+                                value("profile_name", repo.profile()),
+                                value("validation_gate", repo.validationGate()),
                                 value("oai_record", report.getKey()),
                                 raw("validation_results", json)
                             );
                         } catch (JsonProcessingException | OutOfMemoryError e) {
-                            log.error("{}: Failed to write report for {}.", repo.getCode(), report.getKey(), e);
+                            log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
                         }
                     });
             } catch (IOException | OutOfMemoryError e) {
-                log.error("Failed to validate {}: {}", repo.getCode(), e.toString());
+                log.error("Failed to validate {}: {}", repo.code(), e.toString());
             }
         }
     }
