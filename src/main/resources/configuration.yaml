@@ -6,11 +6,11 @@ repositories:
     validationGate: BASIC
   - code: APIS
     directory: ./APIS/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: AUSSDA
     directory: ./AUSSDA/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/1.0.4/profile-mono.xml
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
     validationGate: BASIC
   - code: CSDA
     directory: ./CSDA/oai_ddi/
@@ -41,20 +41,20 @@ repositories:
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: SASD
-    directory: ./SASD/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
+    directory: ./SASD/oai_ddi25/
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: SND
     directory: ./SND/oai_ddi25/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
-  - code: SoDaNet
-    directory: ./SoDaNet/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
-    validationGate: BASIC
   - code: SODHA
     directory: ./SODHA/oai_ddi/
     profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
+    validationGate: BASIC
+  - code: SoDaNet
+    directory: ./SoDaNet/oai_ddi/
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validationGate: BASIC
   - code: UKDS
     directory: ./UKDS/ddi/
