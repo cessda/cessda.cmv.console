@@ -34,11 +34,11 @@ repositories:
     validationGate: BASIC
   - code: NSD
     directory: ./NSD/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile-mono.xml
     validationGate: BASIC
   - code: ProgedoSciencesPo
     directory: ./ProgedoSciencesPo/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
     validationGate: BASIC
   - code: SASD
     directory: ./SASD/oai_ddi25/
