@@ -34,10 +34,10 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static net.logstash.logback.argument.StructuredArguments.raw;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
@@ -124,6 +124,9 @@ public class Validator {
             try (var sourceFilesStream = Files.walk(sourceDirectory)) {
                 var profile = Resource.newResource(repo.profile().toURL().openStream());
 
+                var counter = new AtomicInteger();
+                var invalidRecordsCounter = new AtomicInteger();
+
                 sourceFilesStream.filter(Files::isRegularFile)
                     .toList() // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
@@ -138,20 +141,30 @@ public class Validator {
                         }
                     })
                     .forEach(report -> {
-                        try {
-                            MDC.put(MDC_KEY, timestamp);
-                            var json = objectMapper.writeValueAsString(report.getValue());
-                            log.info("{}: {}: {}: {}: {}.",
-                                value("repo_name", repo.code()),
-                                value("profile_name", repo.profile()),
-                                value("validation_gate", repo.validationGate()),
-                                value("oai_record", report.getKey()),
-                                raw("validation_results", json)
-                            );
-                        } catch (JsonProcessingException | OutOfMemoryError e) {
-                            log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
+                        counter.incrementAndGet();
+                        if (!report.getValue().getConstraintViolations().isEmpty()) {
+                            invalidRecordsCounter.incrementAndGet();
+                            try {
+                                MDC.put(MDC_KEY, timestamp);
+                                var json = objectMapper.writeValueAsString(report.getValue());
+                                log.info("{}: {}: {}: {}: {}.",
+                                    value("repo_name", repo.code()),
+                                    value("profile_name", repo.profile()),
+                                    value("validation_gate", repo.validationGate()),
+                                    value("oai_record", report.getKey()),
+                                    value("validation_results", json)
+                                );
+                            } catch (JsonProcessingException | OutOfMemoryError e) {
+                                log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
+                            }
                         }
                     });
+
+                log.info("{}: Validated {} records, {} invalid",
+                    value("repo_name", repo.code()),
+                    value("validated_records", counter),
+                    value("invalid_records", invalidRecordsCounter)
+                );
             } catch (IOException | OutOfMemoryError e) {
                 log.error("Failed to validate {}: {}", repo.code(), e.toString());
             }
