@@ -15,13 +15,13 @@
  */
 package eu.cessda.cmv.console;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.nio.file.Path;
 import java.util.Collection;
 
 public record Configuration(
-    @JsonProperty("rootDirectory") Path rootDirectory,
-    @JsonProperty("repositories") Collection<Repository> repositories
+    Path rootDirectory,
+    Path destinationDirectory,
+    Path wrappedDirectory,
+    Collection<Repository> repositories
 ) {
 }

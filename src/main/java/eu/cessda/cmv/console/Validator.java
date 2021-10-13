@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
@@ -63,14 +64,22 @@ public class Validator {
         // Allow the base path to be configurable as a program argument
         if (args.length > 0) {
             Path baseDirectory;
+            Path destinationDirectory = configuration.destinationDirectory();
+            Path wrappedDirectory = configuration.wrappedDirectory();
             try {
                 baseDirectory = Path.of(args[0]);
+                if (args.length > 1) {
+                    destinationDirectory = Path.of(args[1]);
+                    if (args.length > 2) {
+                        wrappedDirectory = Path.of(args[2]);
+                    }
+                }
             } catch (InvalidPathException e) {
                 log.error("Parsing base directory failed: {}", e.getMessage());
                 System.exit(1);
                 return;
             }
-            configuration = new Configuration(baseDirectory, configuration.repositories());
+            configuration = new Configuration(baseDirectory, destinationDirectory, wrappedDirectory, configuration.repositories());
         }
 
         // Instance and run the validator
@@ -100,16 +109,15 @@ public class Validator {
      * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation result.
      * @throws RuntimeException if an error occurs during the validation.
      */
-    private Map.Entry<String, ValidationReportV0> validateDocuments(
+    private Map.Entry<Path, ValidationReportV0> validateDocuments(
         Path documentPath, Resource profile, ValidationGateName validationGate
     ) {
         log.debug("Validating {} with profile {}.", documentPath, profile);
 
-        var fileName = URLDecoder.decode(removeExtension(documentPath.getFileName().toString()), UTF_8);
         var document = Resource.newResource(documentPath.toUri());
 
         ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
-        return Map.entry(fileName, validationReport);
+        return Map.entry(documentPath, validationReport);
     }
 
     /**
@@ -124,7 +132,7 @@ public class Validator {
             try (var sourceFilesStream = Files.walk(sourceDirectory)) {
                 var profile = Resource.newResource(repo.profile().toURL().openStream());
 
-                var counter = new AtomicInteger();
+                var recordCounter = new AtomicInteger();
                 var invalidRecordsCounter = new AtomicInteger();
 
                 sourceFilesStream.filter(Files::isRegularFile)
@@ -141,33 +149,60 @@ public class Validator {
                         }
                     })
                     .forEach(report -> {
-                        counter.incrementAndGet();
+                        recordCounter.incrementAndGet();
                         if (!report.getValue().getConstraintViolations().isEmpty()) {
                             invalidRecordsCounter.incrementAndGet();
                             try {
                                 MDC.put(MDC_KEY, timestamp);
+                                var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
                                 var json = objectMapper.writeValueAsString(report.getValue());
                                 log.info("{}: {}: {}: {}: {}.",
                                     value("repo_name", repo.code()),
                                     value("profile_name", repo.profile()),
                                     value("validation_gate", repo.validationGate()),
-                                    value("oai_record", report.getKey()),
+                                    value("oai_record", fileName),
                                     value("validation_results", json)
                                 );
                             } catch (JsonProcessingException | OutOfMemoryError e) {
                                 log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
+                            }
+                        } else {
+                            if (configuration.destinationDirectory() != null) {
+                                copyToDestination(repo, report);
                             }
                         }
                     });
 
                 log.info("{}: Validated {} records, {} invalid",
                     value("repo_name", repo.code()),
-                    value("validated_records", counter),
+                    value("validated_records", recordCounter),
                     value("invalid_records", invalidRecordsCounter)
                 );
             } catch (IOException | OutOfMemoryError e) {
                 log.error("Failed to validate {}: {}", repo.code(), e.toString());
             }
+        }
+    }
+
+    private void copyToDestination(Repository repo, Map.Entry<Path, ValidationReportV0> report) {
+        // Convert the absolute path into a relative path from the root XML directory.
+        var relativePath = configuration.rootDirectory().relativize(report.getKey());
+
+        // If an unwrapped source directory is configured use that, otherwise use the given path.
+        Path sourcePath;
+        if (configuration.wrappedDirectory() != null) {
+            sourcePath = configuration.wrappedDirectory().resolve(relativePath);
+        } else {
+            sourcePath = report.getKey();
+        }
+
+        var destinationPath = configuration.destinationDirectory().resolve(relativePath);
+        try {
+            // Create all required directories and copy the file
+            Files.createDirectories(destinationPath.getParent());
+            Files.copy(sourcePath, destinationPath, REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("{}: Error when copying to destination directory: {}", repo.code(), e.toString());
         }
     }
 }
