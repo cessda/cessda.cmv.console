@@ -26,7 +26,10 @@ import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.xml.sax.SAXException;
 
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
@@ -50,10 +53,22 @@ public class Validator {
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
+    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal;
 
     public Validator(Configuration configuration) {
         this.configuration = configuration;
         this.objectMapper = new ObjectMapper();
+
+        // Schema validators are not thread safe, so assign each thread its own validator.
+        validatorThreadLocal = ThreadLocal.withInitial(() -> {
+            try {
+                var resource = this.getClass().getResource("/schemas/codebook.xsd");
+                var schema = SchemaFactory.newDefaultInstance().newSchema(resource);
+                return schema.newValidator();
+            } catch (SAXException e) {
+                throw new IllegalStateException(e);
+            }
+        });
     }
 
     public static void main(String[] args) throws IOException {
@@ -141,12 +156,16 @@ public class Validator {
                     .flatMap(file -> {
                         try {
                             MDC.put(MDC_KEY, timestamp);
+                            validatorThreadLocal.get().validate(new StreamSource(Files.newInputStream(file)));
                             return Stream.of(validateDocuments(file, profile, repo.validationGate()));
-                        } catch (RuntimeException | OutOfMemoryError e) {
+                        } catch (SAXException e) {
+                            // Handle schema validation errors
+                            log.info("{}: Schema validation of {} failed: {}", repo.code(), file, e.getMessage());
+                        } catch (RuntimeException | IOException | OutOfMemoryError e) {
                             // Handle unexpected exceptions and out of memory errors
                             log.error("{}: Validation of {} failed", repo.code(), file, e);
-                            return Stream.empty();
                         }
+                        return Stream.empty();
                     })
                     .forEach(report -> {
                         recordCounter.incrementAndGet();
