@@ -49,7 +49,9 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
+
     private static final String MDC_KEY = "validator_job";
+    private static final String REPO_NAME = "repo_name";
 
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final Configuration configuration;
@@ -164,10 +166,14 @@ public class Validator {
                             MDC.put(MDC_KEY, timestamp);
                             return Stream.of(validateDocuments(file, profile, repo.validationGate()));
                         } catch (SAXException e) {
+                            // Increment counters, all records that reach here are invalid
+                            recordCounter.incrementAndGet();
+                            invalidRecordsCounter.incrementAndGet();
+
                             // Handle schema validation errors
-                            var fileName = URLDecoder.decode(removeExtension(file.toString()), UTF_8);
+                            var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
                             log.info("{}: Schema validation of {} failed: {}",
-                                value("repo_name", repo.code()),
+                                value(REPO_NAME, repo.code()),
                                 value("oai_record", fileName),
                                 value("schema_violations", e.getMessage())
                             );
@@ -186,7 +192,7 @@ public class Validator {
                                 var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
                                 var json = objectMapper.writeValueAsString(report.getValue());
                                 log.info("{}: {}: {}: {}: {}.",
-                                    value("repo_name", repo.code()),
+                                    value(REPO_NAME, repo.code()),
                                     value("profile_name", repo.profile()),
                                     value("validation_gate", repo.validationGate()),
                                     value("oai_record", fileName),
@@ -203,7 +209,7 @@ public class Validator {
                     });
 
                 log.info("{}: Validated {} records, {} invalid",
-                    value("repo_name", repo.code()),
+                    value(REPO_NAME, repo.code()),
                     value("validated_records", recordCounter),
                     value("invalid_records", invalidRecordsCounter)
                 );
