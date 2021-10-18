@@ -30,6 +30,7 @@ import org.xml.sax.SAXException;
 
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
@@ -53,22 +54,21 @@ public class Validator {
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
-    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal;
+
+    // Schema validators are not thread safe, so assign each thread its own validator.
+    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal = ThreadLocal.withInitial(() -> {
+        try {
+            var resource = this.getClass().getResource("/schemas/codebook.xsd");
+            var schema = SchemaFactory.newDefaultInstance().newSchema(resource);
+            return schema.newValidator();
+        } catch (SAXException e) {
+            throw new IllegalStateException(e);
+        }
+    });
 
     public Validator(Configuration configuration) {
         this.configuration = configuration;
         this.objectMapper = new ObjectMapper();
-
-        // Schema validators are not thread safe, so assign each thread its own validator.
-        validatorThreadLocal = ThreadLocal.withInitial(() -> {
-            try {
-                var resource = this.getClass().getResource("/schemas/codebook.xsd");
-                var schema = SchemaFactory.newDefaultInstance().newSchema(resource);
-                return schema.newValidator();
-            } catch (SAXException e) {
-                throw new IllegalStateException(e);
-            }
-        });
     }
 
     public static void main(String[] args) throws IOException {
@@ -123,15 +123,21 @@ public class Validator {
      * @param validationGate the {@link ValidationGateName} to use.
      * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation result.
      * @throws RuntimeException if an error occurs during the validation.
+     * @throws SAXException     if the document doesn't conform to the DDI schema.
+     * @throws IOException      if an IO error occurred.
      */
     private Map.Entry<Path, ValidationReportV0> validateDocuments(
         Path documentPath, Resource profile, ValidationGateName validationGate
-    ) {
+    ) throws IOException, SAXException {
+        var buffer = Files.readAllBytes(documentPath);
+
+        log.debug("Validating {} against XML schema", documentPath);
+        validatorThreadLocal.get().validate(new StreamSource(new ByteArrayInputStream(buffer)));
+
         log.debug("Validating {} with profile {}.", documentPath, profile);
-
-        var document = Resource.newResource(documentPath.toUri());
-
+        var document = Resource.newResource(new ByteArrayInputStream(buffer));
         ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
+
         return Map.entry(documentPath, validationReport);
     }
 
@@ -156,7 +162,6 @@ public class Validator {
                     .flatMap(file -> {
                         try {
                             MDC.put(MDC_KEY, timestamp);
-                            validatorThreadLocal.get().validate(new StreamSource(Files.newInputStream(file)));
                             return Stream.of(validateDocuments(file, profile, repo.validationGate()));
                         } catch (SAXException e) {
                             // Handle schema validation errors
