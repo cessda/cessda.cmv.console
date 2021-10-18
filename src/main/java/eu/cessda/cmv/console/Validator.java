@@ -165,7 +165,12 @@ public class Validator {
                             return Stream.of(validateDocuments(file, profile, repo.validationGate()));
                         } catch (SAXException e) {
                             // Handle schema validation errors
-                            log.info("{}: Schema validation of {} failed: {}", repo.code(), file, e.getMessage());
+                            var fileName = URLDecoder.decode(removeExtension(file.toString()), UTF_8);
+                            log.info("{}: Schema validation of {} failed: {}",
+                                value("repo_name", repo.code()),
+                                value("oai_record", fileName),
+                                value("schema_violations", e.getMessage())
+                            );
                         } catch (RuntimeException | IOException | OutOfMemoryError e) {
                             // Handle unexpected exceptions and out of memory errors
                             log.error("{}: Validation of {} failed", repo.code(), file, e);
