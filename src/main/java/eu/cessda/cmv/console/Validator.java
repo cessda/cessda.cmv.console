@@ -190,7 +190,7 @@ public class Validator {
                             try {
                                 MDC.put(MDC_KEY, timestamp);
                                 var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
-                                var json = objectMapper.writeValueAsString(report.getValue());
+                                var json = objectMapper.writeValueAsString(report.getValue().getConstraintViolations());
                                 log.info("{}: {}: {}: {}: {}.",
                                     value(REPO_NAME, repo.code()),
                                     value("profile_name", repo.profile()),
