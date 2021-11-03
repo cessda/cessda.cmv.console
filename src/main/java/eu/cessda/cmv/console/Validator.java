@@ -208,8 +208,9 @@ public class Validator {
                         }
                     });
 
-                log.info("{}: Validated {} records, {} invalid",
+                log.info("{}: {}: Validated {} records, {} invalid",
                     value(REPO_NAME, repo.code()),
+                    value("profile_name", repo.profile()),
                     value("validated_records", recordCounter),
                     value("invalid_records", invalidRecordsCounter)
                 );
