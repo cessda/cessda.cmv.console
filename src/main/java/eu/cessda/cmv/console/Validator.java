@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
@@ -62,7 +64,9 @@ public class Validator {
         try {
             var resource = this.getClass().getResource("/schemas/codebook.xsd");
             var schema = SchemaFactory.newDefaultInstance().newSchema(resource);
-            return schema.newValidator();
+            var validator = schema.newValidator();
+            validator.setErrorHandler(new LoggingErrorHandler());
+            return validator;
         } catch (SAXException e) {
             throw new IllegalStateException(e);
         }
@@ -74,7 +78,6 @@ public class Validator {
     }
 
     public static void main(String[] args) throws IOException {
-        log.info("Starting validator.");
 
         var configuration = parseConfiguration();
 
@@ -123,24 +126,26 @@ public class Validator {
      * @param documentPath   the document to validate.
      * @param profile        the profile to validate with.
      * @param validationGate the {@link ValidationGateName} to use.
-     * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation result.
+     * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation results.
      * @throws RuntimeException if an error occurs during the validation.
      * @throws SAXException     if the document doesn't conform to the DDI schema.
      * @throws IOException      if an IO error occurred.
      */
-    private Map.Entry<Path, ValidationReportV0> validateDocuments(
+    private Map.Entry<Path, ValidationResults> validateDocuments(
         Path documentPath, Resource profile, ValidationGateName validationGate
     ) throws IOException, SAXException {
         var buffer = Files.readAllBytes(documentPath);
 
         log.debug("Validating {} against XML schema", documentPath);
         validatorThreadLocal.get().validate(new StreamSource(new ByteArrayInputStream(buffer)));
+        var errors = ((LoggingErrorHandler) validatorThreadLocal.get().getErrorHandler()).getErrors();
+        ((LoggingErrorHandler) validatorThreadLocal.get().getErrorHandler()).reset();
 
         log.debug("Validating {} with profile {}.", documentPath, profile);
         var document = Resource.newResource(new ByteArrayInputStream(buffer));
         ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
 
-        return Map.entry(documentPath, validationReport);
+        return Map.entry(documentPath, new ValidationResults(errors, validationReport));
     }
 
     /**
@@ -165,19 +170,7 @@ public class Validator {
                         try {
                             MDC.put(MDC_KEY, timestamp);
                             return Stream.of(validateDocuments(file, profile, repo.validationGate()));
-                        } catch (SAXException e) {
-                            // Increment counters, all records that reach here are invalid
-                            recordCounter.incrementAndGet();
-                            invalidRecordsCounter.incrementAndGet();
-
-                            // Handle schema validation errors
-                            var fileName = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
-                            log.info("{}: Schema validation of {} failed: {}",
-                                value(REPO_NAME, repo.code()),
-                                value("oai_record", fileName),
-                                value("schema_violations", e.getMessage())
-                            );
-                        } catch (RuntimeException | IOException | OutOfMemoryError e) {
+                        } catch (RuntimeException | IOException | SAXException | OutOfMemoryError e) {
                             // Handle unexpected exceptions and out of memory errors
                             log.error("{}: Validation of {} failed", repo.code(), file, e);
                         }
@@ -185,25 +178,33 @@ public class Validator {
                     })
                     .forEach(report -> {
                         recordCounter.incrementAndGet();
-                        if (!report.getValue().getConstraintViolations().isEmpty()) {
+
+                        var schemaViolations = report.getValue().schemaViolations();
+                        var constraintViolations = report.getValue().report().getConstraintViolations();
+
+                        if (!constraintViolations.isEmpty() || !schemaViolations.isEmpty()) {
                             invalidRecordsCounter.incrementAndGet();
                             try {
                                 MDC.put(MDC_KEY, timestamp);
                                 var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
-                                var json = objectMapper.writeValueAsString(report.getValue().getConstraintViolations());
-                                log.info("{}: {}: {}: {}: {}.",
+                                var schemaViolationsString = objectMapper.writeValueAsString(schemaViolations.stream().map(SAXParseException::toString).toList());
+                                var constraintViolationsString = objectMapper.writeValueAsString(constraintViolations);
+                                log.info("{}: {} has {} schema and {} profile violations{}{}{}{}.",
                                     value(REPO_NAME, repo.code()),
-                                    value("profile_name", repo.profile()),
-                                    value("validation_gate", repo.validationGate()),
                                     value("oai_record", fileName),
-                                    value("validation_results", json)
+                                    schemaViolations.size(),
+                                    constraintViolations.size(),
+                                    keyValue("profile_name", repo.profile(), ""),
+                                    keyValue("validation_gate", repo.validationGate(), ""),
+                                    keyValue("schema_violations", schemaViolationsString, ""),
+                                    keyValue("validation_results", constraintViolationsString, "")
                                 );
                             } catch (JsonProcessingException | OutOfMemoryError e) {
                                 log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
                             }
                         } else {
                             if (configuration.destinationDirectory() != null) {
-                                copyToDestination(repo, report);
+                                copyToDestination(repo, report.getKey());
                             }
                         }
                     });
@@ -220,16 +221,16 @@ public class Validator {
         }
     }
 
-    private void copyToDestination(Repository repo, Map.Entry<Path, ValidationReportV0> report) {
+    private void copyToDestination(Repository repo, Path validationPath) {
         // Convert the absolute path into a relative path from the root XML directory.
-        var relativePath = configuration.rootDirectory().relativize(report.getKey());
+        var relativePath = configuration.rootDirectory().relativize(validationPath);
 
         // If an unwrapped source directory is configured use that, otherwise use the given path.
         Path sourcePath;
         if (configuration.wrappedDirectory() != null) {
             sourcePath = configuration.wrappedDirectory().resolve(relativePath);
         } else {
-            sourcePath = report.getKey();
+            sourcePath = validationPath;
         }
 
         var destinationPath = configuration.destinationDirectory().resolve(relativePath);
