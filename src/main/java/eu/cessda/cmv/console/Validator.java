@@ -187,8 +187,21 @@ public class Validator {
                             try {
                                 MDC.put(MDC_KEY, timestamp);
                                 var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
-                                var schemaViolationsString = objectMapper.writeValueAsString(schemaViolations.stream().map(SAXParseException::toString).toList());
-                                var constraintViolationsString = objectMapper.writeValueAsString(constraintViolations);
+
+                                final String schemaViolationsString;
+                                if (!schemaViolations.isEmpty()) {
+                                    schemaViolationsString = objectMapper.writeValueAsString(schemaViolations.stream().map(SAXParseException::toString).toList());
+                                } else {
+                                    schemaViolationsString = null;
+                                }
+
+                                final String constraintViolationsString;
+                                if (!constraintViolations.isEmpty()) {
+                                    constraintViolationsString = objectMapper.writeValueAsString(constraintViolations);
+                                } else {
+                                    constraintViolationsString = null;
+                                }
+
                                 log.info("{}: {} has {} schema and {} profile violations{}{}{}{}.",
                                     value(REPO_NAME, repo.code()),
                                     value("oai_record", fileName),
