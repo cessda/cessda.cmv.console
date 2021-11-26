@@ -15,16 +15,14 @@
  */
 package eu.cessda.cmv.console;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.cessda.cmv.core.ValidationGateName;
 
-import java.net.URI;
 import java.nio.file.Path;
 
 public record Repository(
-    @JsonProperty("code") String code,
-    @JsonProperty("profile") URI profile,
-    @JsonProperty("directory") Path directory,
-    @JsonProperty("validationGate") ValidationGateName validationGate
+    String code,
+    String profile,
+    Path directory,
+    ValidationGateName validationGate
 ) {
 }

@@ -1,66 +1,79 @@
 rootDirectory: ./input/
+profiles:
+  DDI_2_5:
+    profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    validator: DDI_2_5
+  DDI_2_5_MONO:
+    profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
+    validator: DDI_2_5
+  DDI_3_2:
+    profileURI: https://cmv.cessda.eu/profiles/eqb/ddi-3.2/0.1.1/profile.xml
+    validator: DDI_3_2
+  NESSTAR:
+    profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile-mono.xml
+    validator: null
 repositories:
   - code: ADP
     directory: ./ADP/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: APIS
     directory: ./APIS/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: AUSSDA
     directory: ./AUSSDA/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
+    profile: DDI_2_5_MONO
     validationGate: BASIC
   - code: CSDA
     directory: ./CSDA/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile.xml
+    profile: NESSTAR
     validationGate: BASIC
   - code: DANS
     directory: ./DANS/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: DNA
     directory: ./DNA/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: FSD
     directory: ./FSD/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: GESIS
     directory: ./GESIS/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: NSD
     directory: ./NSD/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile-mono.xml
+    profile: NESSTAR
     validationGate: BASIC
   - code: ProgedoSciencesPo
     directory: ./ProgedoSciencesPo/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
+    profile: DDI_2_5_MONO
     validationGate: BASIC
   - code: SASD
     directory: ./SASD/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
-  - code: SND
-    directory: ./SND/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+  - code: SND_EQB
+    directory: ./SND/ddi_3_2/
+    profile: DDI_3_2
     validationGate: BASIC
   - code: SODHA
     directory: ./SODHA/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
+    profile: DDI_2_5_MONO
     validationGate: BASIC
   - code: SoDaNet
     directory: ./SoDaNet/oai_ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: UKDS
     directory: ./UKDS/ddi/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC
   - code: UniData
     directory: ./UniData/oai_ddi25/
-    profile: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
+    profile: DDI_2_5
     validationGate: BASIC

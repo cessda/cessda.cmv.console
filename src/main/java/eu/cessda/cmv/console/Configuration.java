@@ -15,13 +15,18 @@
  */
 package eu.cessda.cmv.console;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Map;
 
 public record Configuration(
     Path rootDirectory,
     Path destinationDirectory,
     Path wrappedDirectory,
+    Map<String, Profile> profiles,
     Collection<Repository> repositories
 ) {
+    public record Profile(URI profileURI, SchemaValidator validator) {
+    }
 }

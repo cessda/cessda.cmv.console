@@ -18,19 +18,13 @@ package eu.cessda.cmv.console;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import eu.cessda.cmv.core.CessdaMetadataValidatorFactory;
 import eu.cessda.cmv.core.ValidationGateName;
-import eu.cessda.cmv.core.ValidationService;
-import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
-import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.SchemaFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -38,8 +32,12 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -55,22 +53,9 @@ public class Validator {
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
 
-    private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
-
-    // Schema validators are not thread safe, so assign each thread its own validator.
-    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal = ThreadLocal.withInitial(() -> {
-        try {
-            var resource = this.getClass().getResource("/schemas/codebook.xsd");
-            var schema = SchemaFactory.newDefaultInstance().newSchema(resource);
-            var validator = schema.newValidator();
-            validator.setErrorHandler(new LoggingErrorHandler());
-            return validator;
-        } catch (SAXException e) {
-            throw new IllegalStateException(e);
-        }
-    });
+    private final ProfileValidator profileValidator = new ProfileValidator();
 
     public Validator(Configuration configuration) {
         this.configuration = configuration;
@@ -99,7 +84,7 @@ public class Validator {
                 System.exit(1);
                 return;
             }
-            configuration = new Configuration(baseDirectory, destinationDirectory, wrappedDirectory, configuration.repositories());
+            configuration = new Configuration(baseDirectory, destinationDirectory, wrappedDirectory, configuration.profiles(), configuration.repositories());
         }
 
         // Instance and run the validator
@@ -124,7 +109,7 @@ public class Validator {
      * Validate the given document using the specified profile and validation gate.
      *
      * @param documentPath   the document to validate.
-     * @param profile        the profile to validate with.
+     * @param profiles       the profile to validate with.
      * @param validationGate the {@link ValidationGateName} to use.
      * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation results.
      * @throws RuntimeException if an error occurs during the validation.
@@ -132,18 +117,22 @@ public class Validator {
      * @throws IOException      if an IO error occurred.
      */
     private Map.Entry<Path, ValidationResults> validateDocuments(
-        Path documentPath, Resource profile, ValidationGateName validationGate
+        Path documentPath, Configuration.Profile profiles, ValidationGateName validationGate
     ) throws IOException, SAXException {
         var buffer = Files.readAllBytes(documentPath);
 
-        log.debug("Validating {} against XML schema", documentPath);
-        validatorThreadLocal.get().validate(new StreamSource(new ByteArrayInputStream(buffer)));
-        var errors = ((LoggingErrorHandler) validatorThreadLocal.get().getErrorHandler()).getErrors();
-        ((LoggingErrorHandler) validatorThreadLocal.get().getErrorHandler()).reset();
+        // Validate against XML schema if configured
+        List<SAXParseException> errors;
+        if (profiles.validator() != null) {
+            log.debug("Validating {} against XML schema", documentPath);
+            errors = profiles.validator().getSchemaViolations(new ByteArrayInputStream(buffer));
+        } else {
+            log.debug("XML schema validation disabled for {}", documentPath);
+            errors = Collections.emptyList();
+        }
 
-        log.debug("Validating {} with profile {}.", documentPath, profile);
-        var document = Resource.newResource(new ByteArrayInputStream(buffer));
-        ValidationReportV0 validationReport = validationService.validate(document, profile, validationGate);
+        log.debug("Validating {} with profile {}.", documentPath, profiles.profileURI());
+        var validationReport = profileValidator.validateAgainstProfile(new ByteArrayInputStream(buffer), profiles.profileURI(), validationGate);
 
         return Map.entry(documentPath, new ValidationResults(errors, validationReport));
     }
@@ -158,12 +147,12 @@ public class Validator {
             var sourceDirectory = configuration.rootDirectory().resolve(repo.directory()).normalize();
 
             try (var sourceFilesStream = Files.walk(sourceDirectory)) {
-                var profile = Resource.newResource(repo.profile().toURL().openStream());
+                var profile = configuration.profiles().get(repo.profile());
 
                 var recordCounter = new AtomicInteger();
                 var invalidRecordsCounter = new AtomicInteger();
 
-                sourceFilesStream.filter(Files::isRegularFile)
+                var copiedFiles = sourceFilesStream.filter(Files::isRegularFile)
                     .toList() // Collecting to a list allows better parallelisation behavior as the overall size is known
                     .parallelStream()
                     .flatMap(file -> {
@@ -176,51 +165,23 @@ public class Validator {
                         }
                         return Stream.empty();
                     })
-                    .forEach(report -> {
+                    .flatMap(report -> {
                         recordCounter.incrementAndGet();
 
-                        var schemaViolations = report.getValue().schemaViolations();
-                        var constraintViolations = report.getValue().report().getConstraintViolations();
-
-                        if (!constraintViolations.isEmpty() || !schemaViolations.isEmpty()) {
+                        if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
                             invalidRecordsCounter.incrementAndGet();
-                            try {
-                                MDC.put(MDC_KEY, timestamp);
-                                var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
-
-                                final String schemaViolationsString;
-                                if (!schemaViolations.isEmpty()) {
-                                    schemaViolationsString = objectMapper.writeValueAsString(schemaViolations.stream().map(SAXParseException::toString).toList());
-                                } else {
-                                    schemaViolationsString = null;
-                                }
-
-                                final String constraintViolationsString;
-                                if (!constraintViolations.isEmpty()) {
-                                    constraintViolationsString = objectMapper.writeValueAsString(constraintViolations);
-                                } else {
-                                    constraintViolationsString = null;
-                                }
-
-                                log.info("{}: {} has {} schema and {} profile violations{}{}{}{}.",
-                                    value(REPO_NAME, repo.code()),
-                                    value("oai_record", fileName),
-                                    schemaViolations.size(),
-                                    constraintViolations.size(),
-                                    keyValue("profile_name", repo.profile(), ""),
-                                    keyValue("validation_gate", repo.validationGate(), ""),
-                                    keyValue("schema_violations", schemaViolationsString, ""),
-                                    keyValue("validation_results", constraintViolationsString, "")
-                                );
-                            } catch (JsonProcessingException | OutOfMemoryError e) {
-                                log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
-                            }
+                            MDC.put(MDC_KEY, timestamp);
+                            reportValidationErrors(repo, report);
                         } else {
                             if (configuration.destinationDirectory() != null) {
-                                copyToDestination(repo, report.getKey());
+                                return copyToDestination(report.getKey()).stream();
                             }
                         }
-                    });
+                        return Stream.empty();
+                    }).collect(Collectors.toSet());
+
+                // Clean up files.
+                System.out.println(copiedFiles);
 
                 log.info("{}: {}: Validated {} records, {} invalid",
                     value(REPO_NAME, repo.code()),
@@ -228,13 +189,65 @@ public class Validator {
                     value("validated_records", recordCounter),
                     value("invalid_records", invalidRecordsCounter)
                 );
-            } catch (IOException | OutOfMemoryError e) {
+            } catch (IOException | OutOfMemoryError | ProfileLoadFailedException e) {
                 log.error("Failed to validate {}: {}", repo.code(), e.toString());
             }
         }
     }
 
-    private void copyToDestination(Repository repo, Path validationPath) {
+    /**
+     * Log schema and constraint violations.
+     *
+     * @param repo   the repository.
+     * @param report the validation report.
+     */
+    private void reportValidationErrors(Repository repo, Map.Entry<Path, ValidationResults> report) {
+        try {
+
+            var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
+
+            var schemaViolations = report.getValue().schemaViolations();
+            final String schemaViolationsString;
+            if (!schemaViolations.isEmpty()) {
+                schemaViolationsString = objectMapper.writeValueAsString(schemaViolations.stream().map(SAXParseException::toString).toList());
+            } else {
+                schemaViolationsString = null;
+            }
+
+            var constraintViolations = report.getValue().report().getConstraintViolations();
+            final String constraintViolationsString;
+            if (!constraintViolations.isEmpty()) {
+                constraintViolationsString = objectMapper.writeValueAsString(constraintViolations);
+            } else {
+                constraintViolationsString = null;
+            }
+
+            log.info("{}: {} has {} schema and {} profile violations{}{}{}{}.",
+                value(REPO_NAME, repo.code()),
+                value("oai_record", fileName),
+                schemaViolations.size(),
+                constraintViolations.size(),
+                keyValue("profile_name", repo.profile(), ""),
+                keyValue("validation_gate", repo.validationGate(), ""),
+                keyValue("schema_violations", schemaViolationsString, ""),
+                keyValue("validation_results", constraintViolationsString, "")
+            );
+        } catch (JsonProcessingException | OutOfMemoryError e) {
+            log.error("{}: Failed to write report for {}.", repo.code(), report.getKey(), e);
+        }
+    }
+
+    /**
+     * Copy the validated record to the configured destination directory.
+     * <p>
+     * If a wrapped directory is configured, the wrapped record will be copied to the destination
+     * directory, otherwise the source file used will be copied. The folder structure of the source
+     * directory is kept.
+     *
+     * @param validationPath the validated record to copy.
+     * @return the destination path, or an empty {@link Optional} if the copying failed.
+     */
+    private Optional<Path> copyToDestination(Path validationPath) {
         // Convert the absolute path into a relative path from the root XML directory.
         var relativePath = configuration.rootDirectory().relativize(validationPath);
 
@@ -251,8 +264,10 @@ public class Validator {
             // Create all required directories and copy the file
             Files.createDirectories(destinationPath.getParent());
             Files.copy(sourcePath, destinationPath, REPLACE_EXISTING);
+            return Optional.of(destinationPath);
         } catch (IOException e) {
-            log.error("{}: Error when copying to destination directory: {}", repo.code(), e.toString());
+            log.error("Error when copying {} to destination directory: {}", validationPath, e.toString());
+            return Optional.empty();
         }
     }
 }
