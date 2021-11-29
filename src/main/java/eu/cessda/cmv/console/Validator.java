@@ -28,14 +28,12 @@ import org.xml.sax.SAXParseException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.nio.file.DirectoryIteratorException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -181,7 +179,9 @@ public class Validator {
                     }).collect(Collectors.toSet());
 
                 // Clean up files.
-                System.out.println(copiedFiles);
+                if (configuration.destinationDirectory() != null) {
+                    deleteOrphanedRecords(repo, copiedFiles);
+                }
 
                 log.info("{}: {}: Validated {} records, {} invalid",
                     value(REPO_NAME, repo.code()),
@@ -259,7 +259,7 @@ public class Validator {
             sourcePath = validationPath;
         }
 
-        var destinationPath = configuration.destinationDirectory().resolve(relativePath);
+        var destinationPath = configuration.destinationDirectory().resolve(relativePath).normalize();
         try {
             // Create all required directories and copy the file
             Files.createDirectories(destinationPath.getParent());
@@ -268,6 +268,27 @@ public class Validator {
         } catch (IOException e) {
             log.error("Error when copying {} to destination directory: {}", validationPath, e.toString());
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Delete orphaned records from the destination directory.
+     *
+     * @param repository the source repository.
+     * @param records    the collection of record paths that passed validation.
+     */
+    private void deleteOrphanedRecords(Repository repository, Collection<Path> records) {
+        var destinationPath = configuration.destinationDirectory().resolve(repository.directory()).normalize();
+        try (var directoryStream = Files.newDirectoryStream(destinationPath)) {
+            for (var file : directoryStream) {
+                if (!records.contains(file)) {
+                    // Delete the records.
+                    Files.delete(file);
+                    log.debug("{}: Deleted {}", repository.code(), file);
+                }
+            }
+        } catch (DirectoryIteratorException | IOException e) {
+            log.warn("{}: Couldn't clean up: {}", repository.code(), e.toString());
         }
     }
 }
