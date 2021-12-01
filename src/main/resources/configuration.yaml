@@ -33,8 +33,9 @@ repositories:
     directory: ./DANS/
     profile: DDI_2_5
     validationGate: BASIC
+  # Changed metadata prefix. See #388
   - code: DNA
-    directory: ./DNA/oai_ddi25/
+    directory: ./DNA/ddi_c/
     profile: DDI_2_5
     validationGate: BASIC
   - code: FSD
@@ -53,8 +54,9 @@ repositories:
     directory: ./ProgedoSciencesPo/oai_ddi/
     profile: DDI_2_5_MONO
     validationGate: BASIC
+  # Changed metadata prefix. See #388
   - code: SASD
-    directory: ./SASD/oai_ddi25/
+    directory: ./SASD/ddi_c/
     profile: DDI_2_5
     validationGate: BASIC
   - code: SND_EQB
