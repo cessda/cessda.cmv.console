@@ -13,12 +13,14 @@ profiles:
     profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile-mono.xml
     validator: null
 repositories:
+  # Changed metadata prefix. See #388
   - code: ADP
-    directory: ./ADP/oai_ddi25/
+    directory: ./ADP/ddi_c/
     profile: DDI_2_5
     validationGate: BASIC
+  # Changed metadata prefix. See #388
   - code: APIS
-    directory: ./APIS/oai_ddi25/
+    directory: ./APIS/ddi_c/
     profile: DDI_2_5
     validationGate: BASIC
   - code: AUSSDA
