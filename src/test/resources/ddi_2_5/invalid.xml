@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<codeBook xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="ddi:codebook:2_5" version="2.5" xml:lang="en"
+          xsi:schemaLocation="ddi:codebook:2_5 https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd">
+    <docDscr>
+        <citation>
+            <titlStmt>
+                <titl xml:lang="de">Koalitionsfragen 1998</titl>
+                <IDNo agency="DOI">doi:10.11587/0AT9DF</IDNo>
+            </titlStmt>
+            <distStmt>
+                <distrbtr source="archive">AUSSDA</distrbtr>
+                <distDate>2021-05-11</distDate>
+            </distStmt>
+            <verStmt source="archive">
+                <version date="2021-05-11" type="RELEASED">1</version>
+            </verStmt>
+            <biblCit>GfK Austria, 2021, "Koalitionsfragen 1998", https://doi.org/10.11587/0AT9DF, AUSSDA, V1</biblCit>
+        </citation>
+    </docDscr>
+    <stdyDscr>
+        <citation>
+            <titlStmt>
+                <titl xml:lang="de">Koalitionsfragen 1998</titl>
+                <IDNo agency="DOI" xml:lang="de">doi:10.11587/0AT9DF</IDNo>
+                <IDNo agency="AUSSDA">GfK-133</IDNo>
+                <IDNo agency="GfK">98/145.297</IDNo>
+                <parTitl xml:lang="de">Unavailable.</parTitl>
+                <parTitl xml:lang="de">Unavailable.</parTitl>
+            </titlStmt>
+            <rspStmt>
+                <AuthEnty affiliation="Fessel-GfK, Institut für Marktforschung Ges.m.b.H." xml:lang="de">GfK Austria
+                </AuthEnty>
+            </rspStmt>
+            <prodStmt>
+                <grantNo agency="Österreichische Volkspartei (ÖVP) Bundesparteileitung">not available</grantNo>
+            </prodStmt>
+            <distStmt>
+                <distrbtr abbr="AUSSDA" source="archive" xml:lang="de">AUSSDA</distrbtr>
+                <distrbtr>The Austrian Social Science Data Archive</distrbtr>
+                <contact affiliation="The Austrian Social Science Data Archive" email="info@aussda.at">AUSSDA</contact>
+                <depositr>GfK Austria</depositr>
+                <distDate date="1/1/1970">1/1/1970</distDate>
+                <distDate date="1/1/1970">1/1/1970</distDate>
+            </distStmt>
+            <serStmt>
+                <serName>Koalition</serName>
+            </serStmt>
+            <holdings URI="https://aussda.at" xml:lang="de"/>
+            <holdings URI="https://aussda.at"/>
+        </citation>
+        <stdyInfo>
+            <subject>
+                <keyword vocab="Unavailable" vocabURI="Unavailable" xml:lang="de">Social Sciences</keyword>
+                <keyword vocab="ELSST" vocabURI="https://elsst.cessda.eu/id">Government policy</keyword>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/vocabulary/TopicClassification" xml:lang="de">
+                    Government, political systems and organisations
+                </topcClas>
+            </subject>
+            <abstract xml:lang="de">Thema: Koalitionsfragen</abstract>
+            <sumDscr>
+                <collDate cycle="P1" date="1998-10-13" event="start">1998-10-13</collDate>
+                <collDate cycle="P1" date="1998-10-16" event="end">1998-10-16</collDate>
+                <dataKind>Numeric</dataKind>
+                <nation abbr="Unavailable." xml:lang="de">Austria</nation>
+                <anlyUnit xml:lang="de">Individual
+                    <concept vocab="Unavailable." vocabURI="Unavailable.">Unavailable.</concept>
+                    <concept vocab="Unavailable.">Unavailable.</concept>
+                    <concept vocabURI="Unavailable.">Unavailable.</concept>
+                </anlyUnit>
+                <universe>Erreichte Interviews: 501; Grundgesamtheit: Frauen und Männer ab 15 Jahren</universe>
+            </sumDscr>
+            <notes>&lt;p&gt;&lt;b&gt;Auf Anfrage digitalisieren wir die zu dieser Studie gehörenden Forschungsdaten und
+                stellen diese für Sie zur Verfügung. Dabei kann es sich um Tabellenbände, Textkommentare oder
+                Grafikbände handeln. Um mehr über die von Ihnen gewünschte Studie zu erfahren, schreiben Sie bitte an
+                &lt;a href="mailto:info@aussda.at?subject=Anfrage zur Digitalisierung der GfK-Studie: Koalitionsfragen
+                1998 (GfK-133)"&gt;info@aussda.at&lt;/a&gt;.&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;
+            </notes>
+        </stdyInfo>
+        <method>
+            <dataColl>
+                <timeMeth xml:lang="de">Cross-section
+                    <concept vocab="Unavailable." vocabURI="Unavailable.">Unavailable.</concept>
+                    <concept vocab="Unavailable.">Unavailable.</concept>
+                    <concept vocabURI="Unavailable.">Unavailable.</concept>
+                </timeMeth>
+                <sampProc xml:lang="de">Probability
+                    <concept vocab="Unavailable." vocabURI="Unavailable.">Unavailable.</concept>
+                    <concept vocab="Unavailable.">Unavailable.</concept>
+                    <concept vocabURI="Unavailable.">Unavailable.</concept>
+                </sampProc>
+                <sources>
+                    <dataSrc>Population group</dataSrc>
+                </sources>
+                <collMode xml:lang="de">Telephone interview: CATI
+                    <concept vocab="Unavailable." vocabURI="Unavailable.">Unavailable.</concept>
+                    <concept vocab="Unavailable.">Unavailable.</concept>
+                    <concept vocabURI="Unavailable.">Unavailable.</concept>
+                </collMode>
+                <resInstru>Questionnaire</resInstru>
+            </dataColl>
+            <anlyInfo/>
+        </method>
+        <dataAccs>
+            <notes level="dv" type="DVN:TOU">&lt;p&gt;&lt;b&gt;Lizenz für die Nutzung zu ausschließlich
+                wissenschaftlichen und nicht­kommerziellen Zwecken&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Durch Nutzung der auf der
+                Plattform zur Verfügung gestellten Archivalien und Metadaten akzeptieren Sie die nachstehenden
+                Lizenzbedingungen und sichern zu, die Archivalien nach der Zurverfügungstellung ausschließlich zu den in
+                der Lizenz geregelten Bestimmungen zu nutzen. Metadaten sind mit einer CCO 1.0 Universal Lizenz
+                versehen. Deren Nutzung ist uneingeschränkt möglich. &lt;/p&gt;
+                &lt;p&gt;&lt;b&gt;§1 Lizenzgewährung&lt;/b&gt;&lt;/p&gt; &lt;p&gt;(1) Unter den Bedingungen dieser
+                Lizenz gewährt die Lizenzgeberin/der Lizenzgeber eine weltweite, zeitlich unbeschränkte,
+                vergütungsfreie, nicht unterlizenzierbare, nichtausschließliche, unwiderrufliche, Lizenz um die
+                Archivalien ausschließlich zu einem konkreten wissenschaftlichen und nicht-kommerziellem Zweck ganz oder
+                teilweise beliebig oft zu nutzen, insbesondere zu vervielfältigen, veröffentlichen, verbreiten, senden,
+                archivieren, netzwerkbasiert, insbesondere über das Internet zugänglich zu machen (§l 9a UrhG) , zu
+                bearbeiten, insbesondere mit anderen Archivalien und Metadaten zu verbinden und Veränderungen
+                vorzunehmen.&lt;/p&gt; &lt;p&gt; (2) Die lizenzierten Archivalien können in allen bekannten und
+                zukünftig entstehenden Medien und Formaten gemäß der Lizenz genutzt werden und die dafür notwendigen
+                technischen Modifikationen vorgenommen werden.&lt;/p&gt; &lt;p&gt;(3) Mit der Zurverfügungstellung der
+                Archivalien erhält die Lizenznehmerin/der Lizenznehmer ein Angebot der Lizenzgeberin/des Lizenzgebers,
+                die Archivalien unter den Bedingungen der vorliegenden Lizenz zu nutzen. Durch die Nutzung nimmt die
+                Lizenznehmerin/der Lizenznehmer das Angebot der Lizenzgeberin/des Lizenzgebers an.&lt;/p&gt; &lt;p&gt;(4)
+                Die vorliegende Lizenz begründet keine Erlaubnis, zu behaupten oder den Eindruck zu erwecken, dass eine
+                Verbindung zur Lizenzgeberin/zum Lizenzgeber besteht oder durch sie/ihn gefördert, gutgeheißen oder
+                offiziell anerkannt wird.&lt;/p&gt; &lt;p&gt;(5) Beim Zugriff auf die Archivalien muss von der
+                Lizenznehmerin/dem Lizenznehmer der angestrebte „wissenschaftliche Zweck" angegebenen werden. AUSSDA
+                behält sich eine Überprüfung dieses Zweckes vor. Stellt sich bei einer Prüfung heraus, dass der
+                angegebene Zweck kein wissenschaftlicher ist, so sind die Archivalien zurückzustellen und es besteht
+                keine rechtliche Grundlage für deren Nutzung. &lt;/p&gt; &lt;p&gt;
+                &lt;p&gt;&lt;b&gt;§ 2 Sonstige Rechte&lt;/b&gt;&lt;/p&gt; &lt;p&gt; (1) Urheberpersönlichkeitsrechte,
+                wie etwa zum Schutz vor Werkentstellungen, werden durch die vorliegende Lizenz ebenso wenig berührt wie
+                das Recht auf Datenschutz und/oder ähnliche Persönlichkeitsrechte. Gleichwohl verzichtet die
+                Lizenzgeberin/der Lizenzgeber auf diese Rechte bzw. ihre Durchsetzung, soweit dies für die Ausübung der
+                übertragenen Rechte erforderlich und möglich ist, jedoch nicht darüber hinaus. &lt;/p&gt; &lt;p&gt; (2)
+                Patent- und Markenrechte sind von der vorliegenden Lizenz nicht umfasst. &lt;/p&gt; &lt;p&gt; (3) Soweit
+                wie möglich verzichtet die Lizenzgeberin/der Lizenzgeber auf eine Vergütung für die Nutzung der
+                lizenzierten Archivalien und Metadaten, sowohl direkt als auch durch eine Verwertungsgesellschaft unter
+                welchem freiwilligen oder abdingbaren gesetzlichen oder Pflichtlizenzmechanismus auch immer eingezogen.
+                &lt;/p&gt;
+                &lt;p&gt;&lt;b&gt;§ 3 Lizenzbedingungen&lt;/b&gt;&lt;/p&gt; &lt;p&gt; (1) Die lizenzierten Archivalien
+                werden ausschließlich zu den von AUSSDA mitgeteilten und von AUSSDA als solche qualifizierten und
+                anerkannten wissenschaftlichen Zwecken gemäß der vorliegenden Lizenz genutzt. Die Nutzung für einen
+                anderen als den AUSSDA mitgeteilten Zweck ist nicht erlaubt. &lt;/p&gt; &lt;p&gt; (2) Bei jeder Form der
+                Nutzung der lizenzierten Archivalien, als Ganzes oder in Teilen, abgewandelten Materialien oder auf den
+                lizenzierten Archivalien aufbauenden Materialien ist stets auf die lizenzierten Archivalien zu
+                verweisen. Dabei ist die von AUSSDA vorgeschriebene Zitierweise zu beachten. &lt;/p&gt; &lt;p&gt; (3)
+                Falls selbst erstelltes abgewandeltes Material weitergegeben wird, darf die dafür gewählte Lizenz nicht
+                dazu führen, dass beim Empfang abgewandelter Materialien die vorliegende Lizenz nicht eingehalten werden
+                kann. &lt;/p&gt;
+                &lt;p&gt;&lt;b&gt;§ 4 Gewährleistungsausschluss und Haftungsausschluss&lt;/b&gt;&lt;/p&gt; &lt;p&gt; (1)
+                Sofern die Lizenzgeberin/der Lizenzgeber nicht separat anderes erklärt und so weit wie möglich, bietet
+                die Lizenzgeberin/der Lizenzgeber die lizenzierten Archivalien zur Nutzung und Bearbeitung an.
+                Hinsichtlich der lizenzierten Archivalien werden keine bestimmten Eigenschaften zugesagt, weder
+                ausdrücklich noch konkludent oder anderweitig, und jegliche Gewährleistung ausgeschlossen,
+                einschließlich der gesetzlichen. Dies umfasst insbesondere das Freisein von Rechtsmängeln,
+                Verkehrsfähigkeit, Eignung für einen bestimmten Zweck, Wahrung der Rechte Dritter, Freisein von (auch
+                verdeckten) Sachmängeln, Richtigkeit und das Vorliegen oder Nichtvorliegen von Irrtümern, gleichviel ob
+                sie bekannt, unbekannt oder erkennbar sind. &lt;/p&gt; &lt;p&gt; (2) Soweit wie möglich, haftet die
+                Lizenzgeberin/der Lizenzgeber nicht für Verluste, Kosten, Aufwendungen oder Schäden, die sich aus der
+                vorliegenden Lizenz oder der Nutzung der lizenzierten Archivalien und Metadaten ergeben, selbst wenn die
+                Lizenzgeberin/der Lizenzgeber auf die Möglichkeit solcher Verluste, Kosten, Aufwendungen oder Schäden
+                hingewiesen wurde. &lt;/p&gt; &lt;p&gt; (3) Der Gewährleistungsausschluss und die Haftungsbeschränkung
+                sollen so ausgelegt werden, dass sie soweit wie möglich einem absoluten Haftungs- und
+                Gewährleistungsausschluss nahekommen. &lt;/p&gt;
+                &lt;p&gt;&lt;b&gt;§ 5 Laufzeit und Beendigung&lt;/b&gt;&lt;/p&gt; &lt;p&gt; (1) Die Rechte aus dieser
+                Lizenz erlöschen automatisch, wenn die Bestimmungen dieser Lizenz nicht eingehalten werden. &lt;/p&gt;
+                &lt;p&gt; (2) Soweit das Recht, die lizenzierten Archivalien zu nutzen, gemäß Abs. l erloschen ist, lebt
+                es wieder auf: &lt;/p&gt;&lt;div class="indent"&gt;&lt;p&gt;1.) automatisch zu dem Zeitpunkt, an welchem
+                die Verletzung abgestellt ist, sofern dies innerhalb von 30 Tagen seit Kenntnis der Verletzung
+                geschieht; oder&lt;/p&gt; &lt;p&gt;2.) durch ausdrückliche Wiedereinsetzung durch die Lizenzgeberin/den
+                Lizenzgeber. &lt;/p&gt;&lt;/div&gt;&lt;p&gt; (3) Dieser Abschnitt schränkt das Recht der
+                Lizenzgeberin/des Lizenzgebers, Ausgleich für die Verletzung der vorliegenden Lizenz zu verlangen, nicht
+                ein. &lt;/p&gt; &lt;p&gt; (4) Die§§ 3 - 6 gelten auch nach Erlöschen der vorliegenden Lizenz fort. &lt;/p&gt;
+                &lt;p&gt;&lt;b&gt;§ 6 Schlussbestimmungen&lt;/b&gt;&lt;/p&gt; &lt;p&gt; (1) Die vorliegende Lizenz soll
+                die Nutzungen der lizenzierten Archivalien, die ohne eine Erlaubnis aus dieser Lizenz zulässig sind
+                nicht verringern, begrenzen, einschränken oder mit Bedingungen belegen und auch nicht dahingehend
+                ausgelegt werden. &lt;/p&gt; &lt;p&gt; (2) Falls eine Klausel der vorliegenden Lizenz als nicht
+                durchsetzbar anzusehen ist, soll diese Klausel automatisch im geringst erforderlichen Maße angepasst
+                werden, um sie durchsetzbar zu machen. Sollte eine der hier enthaltenen Klauseln nicht anpassbar sein,
+                ändert dies nichts an der Durchsetzbarkeit der verbleibenden Bestimmungen. &lt;/p&gt; &lt;p&gt; (3) Auf
+                die Bedingungen der vorliegenden Lizenz wird nicht verzichtet und kein Verstoß dagegen soll als
+                hingenommen gelten, außer die Lizenzgeberin/der Lizenzgeber hat sich damit ausdrücklich einverstanden
+                erklärt. &lt;/p&gt; &lt;p&gt; (4) Die vorliegende Lizenz führt keinesfalls zur Aufhebung von Rechten,
+                die der Lizenzgeberin/dem Lizenzgeber hinsichtlich der Archivalien von Gesetzeswegen zustehen, oder
+                dahingehend interpretiert werden. &lt;/p&gt;
+            </notes>
+            <notes level="dv" type="DVN:TOA">Für jede Datei, die Sie herunterladen erklären Sie:
+
+                &lt;p&gt;&lt;b&gt;Ich akzeptiere die für die Datei gültigen Lizenzbedingungen (Lizenzvertrag). Falls ich
+                alle Dateien auf einmal herunterlade, akzeptiere ich alle Lizenzbedingungen.&lt;/b&gt;&lt;/p&gt;
+
+                &lt;p&gt;Die Lizenzbedingungen befinden sich oben im Abschnitt "Terms of Use".&lt;/p&gt;
+
+                &lt;hr /&gt;
+
+                For each file you download, you declare:
+
+                &lt;p&gt;&lt;b&gt;I accept the license terms valid for the file (license agreement). If I download all
+                files at once, I accept all license terms.&lt;/b&gt;&lt;/p&gt;
+
+                &lt;p&gt;The license terms can be found above in the section "Terms of Use".&lt;/p&gt;
+            </notes>
+            <setAvail/>
+            <useStmt>
+                <restrctn xml:lang="de">Unavailable.</restrctn>
+                <restrctn xml:lang="de">Unavailable.</restrctn>
+            </useStmt>
+        </dataAccs>
+        <othrStdyMat/>
+    </stdyDscr>
+    <fileName/>
+    <fileName xml:lang="de"/>
+    <fileName/>
+    <fileName xml:lang="de"/>
+    <fileName/>
+    <fileName xml:lang="de"/>
+    <fileName/>
+    <fileName xml:lang="de"/>
+    <fileName/>
+    <fileName xml:lang="de"/>
+</codeBook>

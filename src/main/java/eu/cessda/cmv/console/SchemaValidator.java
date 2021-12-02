@@ -58,8 +58,9 @@ public enum SchemaValidator {
         validator.validate(new StreamSource(inputStream));
 
         // Extract errors from the error handler, then reset the validator
-        var errors = ((LoggingErrorHandler) validator.getErrorHandler()).getErrors();
-        ((LoggingErrorHandler) validator.getErrorHandler()).reset();
+        var errorHandler = (LoggingErrorHandler) validator.getErrorHandler();
+        var errors = errorHandler.getErrors();
+        errorHandler.reset();
 
         return errors;
     }

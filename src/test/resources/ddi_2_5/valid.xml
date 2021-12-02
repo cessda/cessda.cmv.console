@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<codeBook xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="ddi:codebook:2_5" version="2.5"
+          xsi:schemaLocation="ddi:codebook:2_5 https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd">
+    <docDscr>
+        <citation>
+            <titlStmt>
+                <titl xml:lang="en">DDI study level documentation for study ZA0212 The Book and Readers in Germany
+                </titl>
+            </titlStmt>
+            <rspStmt>
+                <AuthEnty affiliation="GESIS" xml:lang="en">GESIS - Leibniz Institute for the Social Sciences</AuthEnty>
+                <AuthEnty affiliation="GESIS" xml:lang="de">GESIS - Leibniz Institut für Sozialwissenschaften</AuthEnty>
+            </rspStmt>
+            <holdings URI="https://search.gesis.org/research_data/ZA0212?lang=en" xml:lang="en"/>
+            <holdings URI="https://search.gesis.org/research_data/ZA0212?lang=de" xml:lang="de"/>
+        </citation>
+    </docDscr>
+    <stdyDscr>
+        <citation>
+            <titlStmt>
+                <titl xml:lang="en">The Book and Readers in Germany</titl>
+                <parTitl xml:lang="de">Buch und Leser in Deutschland</parTitl>
+                <IDNo agency="GESIS" xml:lang="en">ZA0212, Version 1.0.0</IDNo>
+                <IDNo agency="GESIS" xml:lang="de">ZA0212, Version 1.0.0</IDNo>
+                <IDNo agency="DOI" xml:lang="en">10.4232/1.0212</IDNo>
+                <IDNo agency="DOI" xml:lang="de">10.4232/1.0212</IDNo>
+            </titlStmt>
+            <rspStmt>
+                <AuthEnty xml:lang="en">DIVO, Frankfurt</AuthEnty>
+                <AuthEnty xml:lang="de">DIVO, Frankfurt</AuthEnty>
+            </rspStmt>
+            <distStmt>
+                <distrbtr URI="http://www.gesis.org/" abbr="GESIS"
+                          affiliation="GESIS - Leibniz Institute for the Social Sciences" xml:lang="en">GESIS Data
+                    Archive for the Social Sciences
+                </distrbtr>
+                <distrbtr URI="http://www.gesis.org/" abbr="GESIS"
+                          affiliation="GESIS - Leibniz Institut für Sozialwissenschaften" xml:lang="de">GESIS
+                    Datenarchiv für Sozialwissenschaften
+                </distrbtr>
+                <distDate date="1966" xml:lang="en"/>
+                <distDate date="1966" xml:lang="de"/>
+            </distStmt>
+            <verStmt>
+                <version date="1966" type="GESIS Data Archive Version" xml:lang="en">Version 1.0.0 (13.04.2010), Version
+                    number created automatically (implementation of a uniform versioning policy), doi:10.4232/1.0212
+                </version>
+                <version date="1966" type="GESIS Data Archive Version" xml:lang="de">Version 1.0.0 (13.04.2010),
+                    Versionsnummer automatisch erzeugt (Einführung einer einheitlichen Versionierung),
+                    doi:10.4232/1.0212
+                </version>
+            </verStmt>
+            <holdings URI="https://search.gesis.org/research_data/ZA0212?lang=en" xml:lang="en"/>
+            <holdings URI="https://search.gesis.org/research_data/ZA0212?lang=de" xml:lang="de"/>
+        </citation>
+        <stdyInfo>
+            <subject>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/v2/vocabularies/TopicClassification/4.0?languageVersion=en-4.0"
+                          xml:lang="en">Leisure, tourism and sport
+                </topcClas>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/v2/vocabularies/TopicClassification/4.0?languageVersion=de-4.0.1"
+                          xml:lang="de">Freizeit, Tourismus und Sport
+                </topcClas>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/v2/vocabularies/TopicClassification/4.0?languageVersion=en-4.0"
+                          xml:lang="en">Time use
+                </topcClas>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/v2/vocabularies/TopicClassification/4.0?languageVersion=de-4.0.1"
+                          xml:lang="de">Zeitbudget
+                </topcClas>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/v2/vocabularies/TopicClassification/4.0?languageVersion=en-4.0"
+                          xml:lang="en">Media
+                </topcClas>
+                <topcClas vocab="CESSDA Topic Classification"
+                          vocabURI="https://vocabularies.cessda.eu/v2/vocabularies/TopicClassification/4.0?languageVersion=de-4.0.1"
+                          xml:lang="de">Medien
+                </topcClas>
+            </subject>
+            <abstract contentType="abstract" xml:lang="en">Motives for reading and reading habits of the population.
+
+                Topics: Book possession and manner of acquisition of books; role of
+                the book in the consciousness of the individual; characterization of
+                readers and non-readers of books (semantic differential); knowledge of
+                and membership in book clubs; characterization of members of a book
+                club (semantic differential); purchase of paperback books; use of
+                libraries; preferred presentation of book and book cover; interest in
+                television; extent and structuring of leisure time as well as
+                occupation and housework; use of reference books and lexicons.
+
+                Demography: age (classified); sex; marital status; occupation;
+                employment; income; household income; state; possession of durable
+                economic goods.
+
+                Interviewer rating: social class of respondent; weekday of interview;
+                city size.
+            </abstract>
+            <abstract contentType="abstract" xml:lang="de">Lesemotive und Leseverhalten der Bevölkerung.
+
+                Themen: Buchbesitz und Art des Erwerbs von Büchern; Rolle des Buches im
+                Bewußtsein des einzelnen; Charakterisierung von Lesern und Nichtlesern
+                von Büchern (semantisches Differential); Kenntnis von und Mitgliedschaft
+                in Buchgemeinschaften; Charakterisierung von Mitgliedern einer
+                Buchgemeinschaft (semantisches Differential); Kauf von Taschenbüchern;
+                Nutzung von Bibliotheken und Leihbüchereien; präferierte Aufmachung von
+                Buch und Einband; Interesse am Fernsehen; Ausmaß und Gestaltung der
+                Freizeit sowie der Berufs- und Hausarbeit; Nutzung von Fachbüchern und
+                Lexika.
+
+                Demographie: Alter (klassiert); Geschlecht; Familienstand; Beruf;
+                Berufstätigkeit; Einkommen; Haushaltseinkommen; Bundesland; Besitz
+                langlebiger Wirtschaftsgüter.
+
+                Interviewerrating: Schichtzugehörigkeit des Befragten; Wochentag des
+                Interviews; Ortsgröße.
+            </abstract>
+            <sumDscr>
+                <collDate date="1964-05" event="start"/>
+                <collDate date="1964-07" event="end"/>
+                <nation abbr="DE" xml:lang="en">Deutschland</nation>
+                <nation abbr="DE" xml:lang="de">Deutschland</nation>
+            </sumDscr>
+        </stdyInfo>
+        <method>
+            <dataColl>
+                <sampProc xml:lang="en">Two-stage random selection
+                </sampProc>
+                <sampProc xml:lang="de">Zweistufige Zufallsauswahl
+                </sampProc>
+                <collMode xml:lang="en">Oral survey with standardized questionnaire
+                </collMode>
+                <collMode xml:lang="de">Mündliche Befragung mit standardisiertem Fragebogen
+                </collMode>
+            </dataColl>
+        </method>
+        <dataAccs>
+            <useStmt>
+                <restrctn xml:lang="en">A - Data and documents are released for academic research and teaching.
+                </restrctn>
+                <restrctn xml:lang="de">A - Daten und Dokumente sind für die akademische Forschung und Lehre
+                    freigegeben.
+                </restrctn>
+            </useStmt>
+        </dataAccs>
+    </stdyDscr>
+</codeBook>

@@ -169,7 +169,7 @@ public class Validator {
                         if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
                             invalidRecordsCounter.incrementAndGet();
                             MDC.put(MDC_KEY, timestamp);
-                            reportValidationErrors(repo, report);
+                            reportValidationErrors(repo, profile, report);
                         } else {
                             if (configuration.destinationDirectory() != null) {
                                 return copyToDestination(report.getKey()).stream();
@@ -185,7 +185,7 @@ public class Validator {
 
                 log.info("{}: {}: Validated {} records, {} invalid",
                     value(REPO_NAME, repo.code()),
-                    value("profile_name", repo.profile()),
+                    value("profile_name", profile.profileURI()),
                     value("validated_records", recordCounter),
                     value("invalid_records", invalidRecordsCounter)
                 );
@@ -198,10 +198,11 @@ public class Validator {
     /**
      * Log schema and constraint violations.
      *
-     * @param repo   the repository.
-     * @param report the validation report.
+     * @param repo    the repository.
+     * @param profile the CMV profile used.
+     * @param report  the validation report.
      */
-    private void reportValidationErrors(Repository repo, Map.Entry<Path, ValidationResults> report) {
+    private void reportValidationErrors(Repository repo, Configuration.Profile profile, Map.Entry<Path, ValidationResults> report) {
         try {
 
             var fileName = URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8);
@@ -227,7 +228,7 @@ public class Validator {
                 value("oai_record", fileName),
                 schemaViolations.size(),
                 constraintViolations.size(),
-                keyValue("profile_name", repo.profile(), ""),
+                keyValue("profile_name", profile.profileURI(), ""),
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, "")
