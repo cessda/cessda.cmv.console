@@ -18,8 +18,11 @@ package eu.cessda.cmv.console;
 import eu.cessda.cmv.core.ValidationGateName;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProfileValidatorTest {
@@ -34,5 +37,18 @@ class ProfileValidatorTest {
         );
 
         assertTrue(results.getConstraintViolations().isEmpty());
+    }
+
+    @Test
+    void shouldThrowIfProfileCannotBeLoaded() {
+        // Invalid URI.
+        var uri = URI.create("invalid://test");
+
+        // Empty input stream, should not be consumed.
+        var nullInputStream = InputStream.nullInputStream();
+
+        assertThrows(ProfileLoadFailedException.class, () ->
+            profileValidator.validateAgainstProfile(nullInputStream, uri, ValidationGateName.BASIC)
+        );
     }
 }
