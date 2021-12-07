@@ -28,6 +28,6 @@ public class ProfileLoadFailedException extends RuntimeException {
      * @param e the cause, must not be null.
      */
     public ProfileLoadFailedException(IOException e) {
-        super(Objects.requireNonNull(e));
+        super(Objects.requireNonNull(e, "exception must not be null"));
     }
 }

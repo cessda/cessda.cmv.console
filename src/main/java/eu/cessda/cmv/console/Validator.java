@@ -96,7 +96,7 @@ public class Validator {
      *
      * @throws IOException if an IO error occurs when reading the configuration.
      */
-    private static Configuration parseConfiguration() throws IOException {
+    static Configuration parseConfiguration() throws IOException {
         return new YAMLMapper().readValue(
             Validator.class.getClassLoader().getResourceAsStream("configuration.yaml"),
             Configuration.class
@@ -114,7 +114,7 @@ public class Validator {
      * @throws SAXException     if the document doesn't conform to the DDI schema.
      * @throws IOException      if an IO error occurred.
      */
-    private Map.Entry<Path, ValidationResults> validateDocuments(
+    Map.Entry<Path, ValidationResults> validateDocuments(
         Path documentPath, Configuration.Profile profiles, ValidationGateName validationGate
     ) throws IOException, SAXException {
         var buffer = Files.readAllBytes(documentPath);
