@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<codeBook xmlns="http://www.icpsr.umich.edu/DDI" ID="NSD1367_en" schemaLocation="http://www.icpsr.umich.edu/DDI http://www.icpsr.umich.edu/DDI/Version1-2-2.xsd" version="1.2.2" xml-lang="en">
+    <docDscr xmlns="">
+        <citation>
+            <titlStmt>
+                <titl>
+                    XML Data Documentation for "Diet Habits Among Youths. Nutritional Education in a Local Community,
+                    1990"
+                </titl>
+                <IDNo>
+                    NSD1367
+                </IDNo>
+            </titlStmt>
+            <rspStmt>
+                <othId affiliation="Norwegian Social Science Data Services" role="Author data documentation">
+                    <p>
+                        Brekke, Kirsti
+                    </p>
+                </othId>
+            </rspStmt>
+            <prodStmt>
+                <producer abbr="NSD">
+                    Norwegian Social Science Data Services
+                </producer>
+                <copyright>
+                    Copyright (C) 2010 Norwegian Social Science Data Services
+                </copyright>
+                <prodDate date="2010-03-30">
+                    2010-03-30
+                </prodDate>
+                <software date="2018-06-26" version="4.0.12 ELSST">
+                    Nesstar Publisher
+                </software>
+            </prodStmt>
+            <distStmt>
+                <distrbtr URI="http://www.nsd.uib.no" abbr="NSD">
+                    Norwegian Social Science Data Services
+                </distrbtr>
+            </distStmt>
+            <verStmt>
+                <version date="2010-03-30"/>
+            </verStmt>
+            <biblCit>
+                XML Data Documentation for "Diet Habits Among Youths. Nutritional Education in a Local Community, 1990".
+                2 nd XML-edition, NSD Bergen, 2010
+            </biblCit>
+        </citation>
+        <docSrc>
+            <titlStmt>
+                <titl>
+                    NSD1367
+                </titl>
+            </titlStmt>
+            <rspStmt>
+                <othId/>
+            </rspStmt>
+            <prodStmt>
+                <producer/>
+            </prodStmt>
+            <distStmt>
+                <distrbtr/>
+            </distStmt>
+        </docSrc>
+    </docDscr>
+    <stdyDscr xmlns="">
+        <citation>
+            <titlStmt>
+                <titl>
+                    Diet Habits Among Youths. Nutritional Education in a Local Community, 1990
+                </titl>
+                <IDNo>
+                    NSD1367
+                </IDNo>
+            </titlStmt>
+            <rspStmt>
+                <AuthEnty>
+                    Knut-Inge Klepp
+                </AuthEnty>
+            </rspStmt>
+            <prodStmt>
+                <producer role="Project manager">
+                    Knut-Inge Klepp
+                </producer>
+                <copyright>
+                    Copyright (C) 2010 Knut-Inge Klepp, University of Bergen
+                </copyright>
+                <prodDate date="2010-03-30">
+                    2010-03-30
+                </prodDate>
+                <software date="2018-06-26" version="4.0.12 ELSST">
+                    Nesstar Publisher
+                </software>
+                <fundAg abbr="UIB">
+                    University of Bergen
+                </fundAg>
+            </prodStmt>
+            <distStmt>
+                <distrbtr URI="http://www.nsd.uib.no" abbr="NSD">
+                    Norwegian Social Science Data Services
+                </distrbtr>
+            </distStmt>
+            <verStmt>
+                <version date="2010-03-30"/>
+                <notes>
+                    Original data from Knut-Inge Klepp, University of Bergen are documented and prepared, second
+                    NSD-version.
+                </notes>
+            </verStmt>
+            <biblCit>
+                "Diet Habits Among Youths. Nutritional Education in a Local Community, 1990". Data collected by
+                Knut-Inge Klepp, University of Bergen. Second NSD edition, Bergen 2010.
+            </biblCit>
+        </citation>
+        <stdyInfo>
+            <subject>
+                <keyword>
+                    Nutrition
+                </keyword>
+                <keyword>
+                    Eating habits
+                </keyword>
+                <keyword>
+                    Children
+                </keyword>
+                <topcClas vocab="CESSDA Topical Classification">
+                    Nutrition
+                </topcClas>
+                <topcClas vocab="CESSDA Topical Classification">
+                    Children (see also child development and child rearing)
+                </topcClas>
+            </subject>
+            <abstract>
+                The purpose of the project was to examine the nutritional habits of 7th grade students at four different
+                schools in Bergen. Information was gathered about diets and nutrition, meals, cooking habits, leisure
+                activities, relationship to friends ,alcohol, and school. A postal self-completion form was districuted
+                to 1633 pupils.
+            </abstract>
+            <sumDscr>
+                <timePrd date="1989" event="start"/>
+                <timePrd date="1990" event="end"/>
+                <collDate date="1989" event="start"/>
+                <collDate date="1990" event="end"/>
+                <nation abbr="NO">
+                    Norway
+                </nation>
+                <geogCover>
+                    Country
+                </geogCover>
+                <geogUnit>
+                    Local government
+                </geogUnit>
+                <anlyUnit>
+                    Individual
+                </anlyUnit>
+                <universe>
+
+                    Children in 7th. grade
+                </universe>
+                <dataKind>
+                    Survey data
+                </dataKind>
+            </sumDscr>
+        </stdyInfo>
+        <method>
+            <dataColl>
+                <timeMeth>
+                    Cross-sectional survey
+                </timeMeth>
+                <dataCollector>
+                    Knut-Inge Klepp
+                </dataCollector>
+                <sampProc>
+                    Net sample: 1633 persons
+                </sampProc>
+                <collMode>
+                    Enquete
+                </collMode>
+                <sources/>
+            </dataColl>
+        </method>
+        <dataAccs>
+            <setAvail>
+                <accsPlac URI="http://dx.doi.org/10.18712/NSD-NSD1367-V1">
+                    doi:10.18712/NSD-NSD1367-V1
+                </accsPlac>
+            </setAvail>
+            <useStmt>
+                <restrctn>
+                    For ytterligere informasjon, kontakt prosjektleder.
+                </restrctn>
+            </useStmt>
+        </dataAccs>
+    </stdyDscr>
+    <dataDscr xmlns=""/>
+</codeBook>

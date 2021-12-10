@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<codeBook xmlns="http://www.icpsr.umich.edu/DDI" ID="NSD1719_en" schemaLocation="http://www.icpsr.umich.edu/DDI http://www.icpsr.umich.edu/DDI/Version1-2-2.xsd" version="1.2.2" xml-lang="en">
+    <docDscr xmlns="">
+        <citation>
+            <titlStmt>
+                <titl>
+                    XML Data Documentation for "Sexuality and Employment, 1990"
+                </titl>
+                <IDNo>
+                    NSD1719
+                </IDNo>
+            </titlStmt>
+            <rspStmt>
+                <othId affiliation="Norwegian Social Science Data Services" role="Author data documentation">
+                    <p>
+                        Reinertsen, Øivind Armando
+                    </p>
+                </othId>
+            </rspStmt>
+            <prodStmt>
+                <producer abbr="NSD">
+                    Norwegian Social Science Data Services
+                </producer>
+                <copyright>
+                    Copyright (C) 2015 Norwegian Social Science Data Services
+                </copyright>
+                <prodDate date="2015-09-01">
+                    2015-09-01
+                </prodDate>
+                <software date="2018-06-26" version="4.0.12 ELSST">
+                    Nesstar Publisher
+                </software>
+            </prodStmt>
+            <distStmt>
+                <distrbtr URI="http://www.nsd.uib.no" abbr="NSD">
+                    Norwegian Social Science Data Services
+                </distrbtr>
+            </distStmt>
+            <verStmt>
+                <version date="2015-09-01"/>
+            </verStmt>
+            <biblCit>
+                XML Data Documentation for "Sexuality and Employment, 1990". 1st XML-edition, NSD Bergen, 2015.
+            </biblCit>
+        </citation>
+        <docSrc>
+            <titlStmt>
+                <titl>
+                    NSD1719
+                </titl>
+            </titlStmt>
+            <distStmt>
+                <distrbtr URI="http://www.nsd.uib.no" abbr="NSD">
+                    Norwegian Social Science Data Services
+                </distrbtr>
+            </distStmt>
+            <biblCit>
+                XML Data Documentation for "[Title, (month), year]". 1st XML-edition, NSD Bergen, [Year]
+            </biblCit>
+        </docSrc>
+    </docDscr>
+    <stdyDscr xmlns="">
+        <citation>
+            <titlStmt>
+                <titl>
+                    Sexuality and Employment, 1990
+                </titl>
+                <IDNo>
+                    NSD1719
+                </IDNo>
+            </titlStmt>
+            <rspStmt>
+                <AuthEnty>
+                    Widerberg, Karin
+                </AuthEnty>
+            </rspStmt>
+            <prodStmt>
+                <producer>
+                    Widerberg, Karin
+                </producer>
+                <copyright>
+                    Copyright (C) 1990 Karin Widerberg
+                </copyright>
+                <software date="2018-06-26" version="4.0.12 ELSST">
+                    Nesstar Publisher
+                </software>
+            </prodStmt>
+            <distStmt>
+                <distrbtr URI="http://www.nsd.uib.no" abbr="NSD">
+                    Norwegian Social Science Data Services
+                </distrbtr>
+            </distStmt>
+            <verStmt>
+                <version date="2015-09-01"/>
+                <notes>
+                    Original data from Karin Widerberg are documented and prepared, first NSD-version.
+                </notes>
+            </verStmt>
+            <biblCit>
+                "Sexuality and Employment, 1990". Data collected by Karin Widerberg. First NSD edition, Bergen 2015.
+            </biblCit>
+        </citation>
+        <stdyInfo>
+            <subject>
+                <keyword vocab="ELSST" vocabURI="http://elsst.esds.ac.uk/">
+                    Labour and employment
+                </keyword>
+                <keyword vocab="ELSST" vocabURI="http://elsst.esds.ac.uk/">
+                    Working conditions
+                </keyword>
+                <keyword vocab="ELSST" vocabURI="http://elsst.esds.ac.uk/">
+                    Sexual harassment
+                </keyword>
+                <keyword vocab="ELSST" vocabURI="http://elsst.esds.ac.uk/">
+                    Discrimination
+                </keyword>
+                <topcClas vocab="CESSDA Topical Classification">
+                    Labour and employment
+                </topcClas>
+                <topcClas vocab="CESSDA Topical Classification">
+                    Labour relations/conflict
+                </topcClas>
+            </subject>
+            <abstract>
+                The survey examines incidents of a sexual nature in the workplace. The survey was conducted by Karin
+                Widerberg in 1990.
+            </abstract>
+            <sumDscr>
+                <timePrd date="1990" event="start"/>
+                <timePrd date="1990" event="end"/>
+                <collDate date="1990" event="start"/>
+                <collDate date="1990" event="end"/>
+                <nation abbr="NO">
+                    Norway
+                </nation>
+                <geogCover>
+                    Country
+                </geogCover>
+                <anlyUnit>
+                    Individual
+                </anlyUnit>
+                <dataKind>
+                    Survey data
+                </dataKind>
+            </sumDscr>
+        </stdyInfo>
+        <method>
+            <dataColl>
+                <timeMeth>
+                    Cross-sectional survey
+                </timeMeth>
+                <dataCollector>
+                    Widerberg, Karin
+                </dataCollector>
+                <sampProc>
+                    The sample consists of 68 persons.
+                </sampProc>
+                <collMode>
+                    Paper/pencil questionnaire
+                </collMode>
+                <sources/>
+            </dataColl>
+        </method>
+        <dataAccs>
+            <setAvail>
+                <accsPlac URI="http://dx.doi.org/10.18712/NSD-NSD1719-V1">
+                    doi:10.18712/NSD-NSD1719-V1
+                </accsPlac>
+            </setAvail>
+            <useStmt>
+                <restrctn>
+                    For ytterligere informasjon, kontakt prosjektleder
+                </restrctn>
+            </useStmt>
+        </dataAccs>
+    </stdyDscr>
+    <dataDscr xmlns=""/>
+</codeBook>
