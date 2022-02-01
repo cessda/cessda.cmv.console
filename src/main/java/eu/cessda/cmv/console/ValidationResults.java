@@ -20,5 +20,6 @@ import org.xml.sax.SAXParseException;
 
 import java.util.List;
 
-record ValidationResults(List<SAXParseException> schemaViolations, ValidationReportV0 report) {
+record ValidationResults(List<SAXParseException> schemaViolations, PidValidator.PidValidationResult pidValidationResult,
+                         ValidationReportV0 report) {
 }
