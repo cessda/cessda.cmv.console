@@ -27,6 +27,6 @@ public record Configuration(
     Map<String, Profile> profiles,
     Collection<Repository> repositories
 ) {
-    public record Profile(URI profileURI, SchemaValidator validator) {
+    public record Profile(URI profileURI, SchemaValidator validator, XPathContext xPathContext) {
     }
 }

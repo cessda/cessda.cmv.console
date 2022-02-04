@@ -3,15 +3,19 @@ profiles:
   DDI_2_5:
     profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml
     validator: DDI_2_5
+    xPathContext: DDI_2_5
   DDI_2_5_MONO:
     profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile-mono.xml
     validator: DDI_2_5
+    xPathContext: DDI_2_5
   DDI_3_2:
     profileURI: https://cmv.cessda.eu/profiles/eqb/ddi-3.2/0.1.1/profile.xml
     validator: DDI_3_2
+    xPathContext: null
   NESSTAR:
     profileURI: https://cmv.cessda.eu/profiles/cdc/ddi-1.2.2/latest/profile-mono.xml
     validator: null
+    xPathContext: NESSTAR
 repositories:
   # Changed metadata prefix. See #388
   - code: ADP

@@ -134,10 +134,15 @@ public class Validator {
             errors = emptyList();
         }
 
-        PidValidator.PidValidationResult pidValidationResult;
+        PIDValidationResult pidValidationResult;
 
         try {
-            pidValidationResult = PidValidator.validatePids(new ByteArrayInputStream(buffer));
+            // Only validate PIDs if configured.
+            if (profiles.xPathContext() != null) {
+                pidValidationResult = PIDValidator.validatePids(new ByteArrayInputStream(buffer), profiles.xPathContext());
+            } else {
+                pidValidationResult = null;
+            }
         } catch (XPathExpressionException e) {
             pidValidationResult = null;
             log.error(e.toString());
@@ -181,7 +186,7 @@ public class Validator {
                         recordCounter.incrementAndGet();
 
                         // Report PID validation errors, these are informative
-                        if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().isAgencyValidURI()) {
+                        if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().valid()) {
                             try {
                                 var pidJson = objectMapper.writeValueAsString(report.getValue().pidValidationResult());
                                 log.info("{}: {} has no valid persistent identifiers{}",
