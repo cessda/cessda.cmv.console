@@ -15,11 +15,12 @@
  */
 package eu.cessda.cmv.console;
 
-import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
-import org.xml.sax.SAXParseException;
+import java.util.Set;
 
-import java.util.List;
-
-record ValidationResults(List<SAXParseException> schemaViolations, PIDValidationResult pidValidationResult,
-                         ValidationReportV0 report) {
+record PID(String agency, String uri, Set<State> state) {
+    enum State {
+        AGENCY_PRESENT,
+        AGENCY_ALLOWED_VALUE,
+        VALID_URI
+    }
 }

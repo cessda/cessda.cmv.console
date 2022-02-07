@@ -25,6 +25,7 @@ import org.slf4j.MDC;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -33,13 +34,17 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.util.Collections.emptyList;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
@@ -126,13 +131,27 @@ public class Validator {
             errors = profiles.validator().getSchemaViolations(new ByteArrayInputStream(buffer));
         } else {
             log.debug("XML schema validation disabled for {}", documentPath);
-            errors = Collections.emptyList();
+            errors = emptyList();
+        }
+
+        PIDValidationResult pidValidationResult;
+
+        try {
+            // Only validate PIDs if configured.
+            if (profiles.xPathContext() != null) {
+                pidValidationResult = PIDValidator.validatePids(new ByteArrayInputStream(buffer), profiles.xPathContext());
+            } else {
+                pidValidationResult = null;
+            }
+        } catch (XPathExpressionException e) {
+            pidValidationResult = null;
+            log.error(e.toString());
         }
 
         log.debug("Validating {} with profile {}.", documentPath, profiles.profileURI());
         var validationReport = profileValidator.validateAgainstProfile(new ByteArrayInputStream(buffer), profiles.profileURI(), validationGate);
 
-        return Map.entry(documentPath, new ValidationResults(errors, validationReport));
+        return Map.entry(documentPath, new ValidationResults(errors, pidValidationResult, validationReport));
     }
 
     /**
@@ -165,6 +184,20 @@ public class Validator {
                     })
                     .flatMap(report -> {
                         recordCounter.incrementAndGet();
+
+                        // Report PID validation errors, these are informative
+                        if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().valid()) {
+                            try {
+                                var pidJson = objectMapper.writeValueAsString(report.getValue().pidValidationResult());
+                                log.info("{}: {} has no valid persistent identifiers{}",
+                                    value(REPO_NAME, repo.code()),
+                                    value("oai_record", URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8)),
+                                    keyValue("pid_report", pidJson, "")
+                                );
+                            } catch (JsonProcessingException e) {
+                                log.error("{}: Failed to write PID report for {}.", repo.code(), report.getKey(), e);
+                            }
+                        }
 
                         if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
                             invalidRecordsCounter.incrementAndGet();

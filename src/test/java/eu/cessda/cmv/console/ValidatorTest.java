@@ -49,7 +49,7 @@ class ValidatorTest {
         }
 
         // Assert that the correct amount of documents were validated.
-        assertEquals(2, resultsMap.size());
+        assertEquals(3, resultsMap.size());
 
         // Assert that there is one result with either constraint or schema validation errors.
         assertTrue(resultsMap.entrySet().stream().anyMatch(r -> !r.getValue().schemaViolations().isEmpty()));

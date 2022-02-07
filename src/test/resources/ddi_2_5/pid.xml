@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<codeBook xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="ddi:codebook:2_5" version="2.5" xml:lang="en"
+          xsi:schemaLocation="ddi:codebook:2_5 https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd">
+    <docDscr>
+        <citation>
+            <titlStmt>
+                <titl xml:lang="sv">Ekonomisk åtstramning och kommunal förnyelse 1986-1987</titl>
+                <parTitl xml:lang="en">Fiscal austerity and urban innovation 1986-1987</parTitl>
+                <IDNo agency="SND">SND 0137</IDNo>
+                <IDNo agency="DOI">https://doi.org/10.5878/000083</IDNo>
+            </titlStmt>
+            <prodStmt>
+                <producer xml:lang="en" abbr="SND">Swedish National Data Service</producer>
+                <producer xml:lang="sv" abbr="SND">Svensk nationell datatjänst</producer>
+            </prodStmt>
+            <holdings URI="https://doi.org/10.5878/000083">Landing page</holdings>
+        </citation>
+    </docDscr>
+    <stdyDscr>
+        <citation>
+            <titlStmt>
+                <titl xml:lang="sv">Ekonomisk åtstramning och kommunal förnyelse 1986-1987</titl>
+                <parTitl xml:lang="en">Fiscal austerity and urban innovation 1986-1987</parTitl>
+                <IDNo agency="SND">SND 0137</IDNo>
+                <IDNo agency="DOI">https://doi.org/10.5878/000083</IDNo>
+            </titlStmt>
+            <rspStmt>
+                <AuthEnty xml:lang="en" affiliation="University of Gothenburg, Department of Political Science">Lars
+                    Strömberg
+                </AuthEnty>
+                <AuthEnty xml:lang="sv" affiliation="Göteborgs universitet, Statsvetenskapliga institutionen">Lars
+                    Strömberg
+                </AuthEnty>
+                <AuthEnty xml:lang="en" affiliation="Lund University, Department of Political Science">Håkan Magnusson
+                </AuthEnty>
+                <AuthEnty xml:lang="sv" affiliation="Lunds universitet, Statsvetenskapliga institutionen">Håkan
+                    Magnusson
+                </AuthEnty>
+                <AuthEnty xml:lang="en" affiliation="University of Gothenburg, Department of Political Science">Cecilia
+                    Bokenstrand
+                </AuthEnty>
+                <AuthEnty xml:lang="sv" affiliation="Göteborgs universitet, Statsvetenskapliga institutionen">Cecilia
+                    Bokenstrand
+                </AuthEnty>
+            </rspStmt>
+            <distStmt>
+                <distrbtr xml:lang="en" abbr="SND" URI="https://snd.gu.se">Swedish National Data Service</distrbtr>
+                <distrbtr xml:lang="sv" abbr="SND" URI="https://snd.gu.se">Svensk nationell datatjänst</distrbtr>
+                <distDate date="1992-01-01">1992-01-01</distDate>
+            </distStmt>
+            <holdings URI="https://doi.org/10.5878/000083">Landing page</holdings>
+        </citation>
+        <stdyInfo>
+            <subject>
+                <keyword xml:lang="en" vocab="ELSST" vocabURI="https://elsst.cessda.eu/id/52b59c33-c268-4848-9315-1c8945079fbe">
+                    internal politics
+                </keyword>
+                <keyword xml:lang="sv" vocab="ELSST" vocabURI="https://elsst.cessda.eu/id/52b59c33-c268-4848-9315-1c8945079fbe">
+                    inrikespolitik
+                </keyword>
+                <topcClas xml:lang="en" vocab="CESSDA Topic Classification" vocabURI="https://vocabularies.cessda.eu/vocabulary/TopicClassification?code=Economics.EconomicPolicyPublicExpenditureAndRevenue">
+                    Economic policy, public expenditure and revenue
+                </topcClas>
+                <topcClas xml:lang="sv" vocab="CESSDA Topic Classification" vocabURI="https://vocabularies.cessda.eu/vocabulary/TopicClassification?code=Economics.EconomicPolicyPublicExpenditureAndRevenue">
+                    Ekonomisk politik, offentliga utgifter och intäkter
+                </topcClas>
+                <topcClas xml:lang="en" vocab="CESSDA Topic Classification" vocabURI="https://vocabularies.cessda.eu/vocabulary/TopicClassification?code=Politics.GovernmentPoliticalSystemsAndOrganisations">
+                    Government, political systems and organisations
+                </topcClas>
+                <topcClas xml:lang="sv" vocab="CESSDA Topic Classification" vocabURI="https://vocabularies.cessda.eu/vocabulary/TopicClassification?code=Politics.GovernmentPoliticalSystemsAndOrganisations">
+                    Regering, politiska system och organisationer
+                </topcClas>
+                <topcClas xml:lang="en" vocab="Standard för svensk indelning av forskningsämnen 2011">Social Sciences
+                </topcClas>
+                <topcClas xml:lang="sv" vocab="Standard för svensk indelning av forskningsämnen 2011">
+                    Samhällsvetenskap
+                </topcClas>
+                <topcClas xml:lang="en" vocab="Standard för svensk indelning av forskningsämnen 2011">Political
+                    Science
+                </topcClas>
+                <topcClas xml:lang="sv" vocab="Standard för svensk indelning av forskningsämnen 2011">Statsvetenskap
+                </topcClas>
+            </subject>
+            <abstract xml:lang="en" contentType="abstract">This study forms part of a larger international project
+                'Fiscal Austerity and Urban Innovation' (FAUI). The purpose of the project is to study and analyse how
+                and to what extent the tightening economic resources in society has resulted in changes and renewal
+                within the scope of municipal operations. The questionnaire was directed to chief economic
+                administrators and contained seven different parts: Budgeting and the budgeting process; Changes within
+                the municipality; Planning and working routines; The municipality´s economic situation; Fiscal
+                management strategies; Comparisons with other municipalities; and background information.
+            </abstract>
+            <abstract xml:lang="sv" contentType="abstract">I början av 1980-talet inleddes ett internationellt
+                forskningssamarbete som kom att kallas 'Fiscal Austerity and Urban Innovation' (FAUI). Två sidor av den
+                kommunala ekonomin bildade utgångspunkt för projektet, dels den kärvare ekonomin, dels de förändringar
+                som uppkommit på lokal nivå, bland annat som ett resultat av de förändrade ekonomiska förutsättningarna.
+                Projektet, som syftar till internationella jämförelser av hur kommunerna i olika länder agerat, bygger
+                på enkätundersökningar av kommunala beslutsfattare. Totalt deltog forskare från ett femtiotal länder.
+                Studien 'Ekonomisk åtstramning och kommunal förnyelse' utgör den svenska delen av projektet. Vid
+                årsskiftet 1986/1987 skickades en enkät ut till ekonomicheferna i samtliga landets kommuner. Enkäten
+                bestod av sju olika frågeområden: Budgetering och budgetarbete; Verksamhetsförändringar i kommunen;
+                Planering och arbetssätt; Kommunens ekonomiska situation; Kommunalekonomiska åtgärder; Jämförelser med
+                andra kommuner; samt bakgrundsuppgifter.
+            </abstract>
+            <sumDscr>
+                <collDate date="1986-12-01" event="start">1986-12-01</collDate>
+                <collDate date="1987-03-15" event="end">1987-03-15</collDate>
+                <nation xml:lang="en" abbr="SE">Sweden</nation>
+                <nation xml:lang="sv" abbr="SE">Sverige</nation>
+                <anlyUnit xml:lang="en">Geographic unit</anlyUnit>
+                <anlyUnit xml:lang="sv">Geografisk enhet</anlyUnit>
+            </sumDscr>
+        </stdyInfo>
+        <method>
+            <dataColl>
+                <timeMeth xml:lang="en">Cross-section</timeMeth>
+                <timeMeth xml:lang="sv">Tvärsnitt</timeMeth>
+                <sampProc xml:lang="en">Total universe/Complete enumeration</sampProc>
+                <sampProc xml:lang="sv">Hela populationen/total räkning</sampProc>
+            </dataColl>
+        </method>
+        <dataAccs>
+            <useStmt>
+                <restrctn xml:lang="en">Access to data through SND. Data are accessible by order.</restrctn>
+                <restrctn xml:lang="sv">Åtkomst till data via SND. Data är tillgängliga via beställning.</restrctn>
+            </useStmt>
+        </dataAccs>
+    </stdyDscr>
+</codeBook>
