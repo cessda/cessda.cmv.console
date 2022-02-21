@@ -57,7 +57,7 @@ repositories:
     profile: NESSTAR
     validationGate: BASIC
   - code: ProgedoSciencesPo
-    directory: ./ProgedoSciencesPo/oai_ddi/
+    directory: ./ProgedoSciencesPo/oai_ddi25/
     profile: DDI_2_5_MONO
     validationGate: BASIC
   # Changed metadata prefix. See #388
