@@ -19,6 +19,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import eu.cessda.cmv.core.ValidationGateName;
+import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -31,7 +36,6 @@ import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -55,6 +59,9 @@ public class Validator {
 
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
+    private static final String DESTINATION_ARGUMENT = "destination";
+    private static final String WRAPPED_ARGUMENT = "wrapped";
+    private static final ValidationReportV0 EMPTY_VALIDATION_REPORT = new ValidationReportV0();
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
@@ -65,35 +72,44 @@ public class Validator {
         this.objectMapper = new ObjectMapper();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ParseException {
 
         var configuration = parseConfiguration();
 
-        // Allow the base path to be configurable as a program argument
-        if (args.length > 0) {
-            Path baseDirectory;
-            Path destinationDirectory = configuration.destinationDirectory();
-            Path wrappedDirectory = configuration.wrappedDirectory();
-            try {
-                baseDirectory = Path.of(args[0]);
-                if (args.length > 1) {
-                    destinationDirectory = Path.of(args[1]);
-                    if (args.length > 2) {
-                        wrappedDirectory = Path.of(args[2]);
-                    }
-                }
-            } catch (InvalidPathException e) {
-                log.error("Parsing base directory failed: {}", e.getMessage());
-                System.exit(1);
-                return;
+        // Command line options
+        var options = new Options();
+        options.addOption("d", DESTINATION_ARGUMENT, true, "The destination directory to store validated records");
+        options.addOption("w", WRAPPED_ARGUMENT, true, "Directory where wrapped records are stored");
+
+        // Command line parser
+        var commandLine = new DefaultParser().parse(options, args);
+
+        // Parse the first argument as the base path
+        Path baseDirectory;
+        if (!commandLine.getArgList().isEmpty()) {
+            baseDirectory = Path.of(commandLine.getArgList().get(0));
+        } else {
+            baseDirectory = configuration.rootDirectory();
+        }
+
+        Path destinationDirectory = configuration.destinationDirectory();
+        Path wrappedDirectory = configuration.wrappedDirectory();
+
+        // Iterate through options and extract paths
+        for (var option : (Iterable<Option>) commandLine::iterator) {
+            if (DESTINATION_ARGUMENT.equals(option.getLongOpt())) {
+                destinationDirectory = Path.of(option.getValue());
+            } else if (WRAPPED_ARGUMENT.equals(option.getLongOpt())) {
+                wrappedDirectory = Path.of(option.getValue());
             }
-            configuration = new Configuration(baseDirectory, destinationDirectory, wrappedDirectory, configuration.profiles(), configuration.repositories());
         }
 
         // Instance and run the validator
         var timestamp = OffsetDateTime.now().toString();
         MDC.put(MDC_KEY, timestamp);
-        new Validator(configuration).validate(timestamp);
+        new Validator(
+            new Configuration(baseDirectory, destinationDirectory, wrappedDirectory, configuration.profiles(), configuration.repositories())
+        ).validate(timestamp);
     }
 
     /**
@@ -149,7 +165,12 @@ public class Validator {
         }
 
         log.debug("Validating {} with profile {}.", documentPath, profiles.profileURI());
-        var validationReport = profileValidator.validateAgainstProfile(new ByteArrayInputStream(buffer), profiles.profileURI(), validationGate);
+        ValidationReportV0 validationReport;
+        if (validationGate != null) {
+            validationReport = profileValidator.validateAgainstProfile(new ByteArrayInputStream(buffer), profiles.profileURI(), validationGate);
+        } else {
+            validationReport = EMPTY_VALIDATION_REPORT;
+        }
 
         return Map.entry(documentPath, new ValidationResults(errors, pidValidationResult, validationReport));
     }
