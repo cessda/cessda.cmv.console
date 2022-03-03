@@ -59,8 +59,6 @@ public class Validator {
 
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
-    private static final String DESTINATION_ARGUMENT = "destination";
-    private static final String WRAPPED_ARGUMENT = "wrapped";
     private static final ValidationReportV0 EMPTY_VALIDATION_REPORT = new ValidationReportV0();
 
     private final Configuration configuration;
@@ -77,9 +75,12 @@ public class Validator {
         var configuration = parseConfiguration();
 
         // Command line options
+        var destinationOption = new Option("d", "destination", true, "The destination directory to store validated records");
+        var wrappedOption = new Option("w", "wrapped", true, "Directory where wrapped records are stored");
+
         var options = new Options();
-        options.addOption("d", DESTINATION_ARGUMENT, true, "The destination directory to store validated records");
-        options.addOption("w", WRAPPED_ARGUMENT, true, "Directory where wrapped records are stored");
+        options.addOption(destinationOption);
+        options.addOption(wrappedOption);
 
         // Command line parser
         var commandLine = new DefaultParser().parse(options, args);
@@ -97,9 +98,9 @@ public class Validator {
 
         // Iterate through options and extract paths
         for (var option : (Iterable<Option>) commandLine::iterator) {
-            if (DESTINATION_ARGUMENT.equals(option.getLongOpt())) {
+            if (destinationOption.equals(option)) {
                 destinationDirectory = Path.of(option.getValue());
-            } else if (WRAPPED_ARGUMENT.equals(option.getLongOpt())) {
+            } else if (wrappedOption.equals(option)) {
                 wrappedDirectory = Path.of(option.getValue());
             }
         }
@@ -119,7 +120,7 @@ public class Validator {
      */
     static Configuration parseConfiguration() throws IOException {
         return new YAMLMapper().readValue(
-            Validator.class.getClassLoader().getResourceAsStream("configuration.yaml"),
+            Validator.class.getResource("/configuration.yaml"),
             Configuration.class
         );
     }
