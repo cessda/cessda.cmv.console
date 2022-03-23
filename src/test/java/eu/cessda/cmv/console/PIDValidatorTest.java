@@ -26,7 +26,7 @@ class PIDValidatorTest {
     void shouldValidatePIDs() throws XPathExpressionException {
         var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/pid.xml");
 
-        var validationResult = PIDValidator.validatePids(validDDIDocument, XPathContext.DDI_2_5);
+        var validationResult = PIDValidator.validatePids(validDDIDocument, DDIVersion.DDI_2_5);
 
         // Assert that no invalid PIDs were returned
         assertTrue(validationResult.valid());
@@ -37,7 +37,7 @@ class PIDValidatorTest {
     void shouldReportInvalidPIDs() throws XPathExpressionException {
         var invalidDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
 
-        var validationResult = PIDValidator.validatePids(invalidDDIDocument, XPathContext.DDI_2_5);
+        var validationResult = PIDValidator.validatePids(invalidDDIDocument, DDIVersion.DDI_2_5);
 
         // Assert that no valid PIDs are found
         assertFalse(validationResult.valid());

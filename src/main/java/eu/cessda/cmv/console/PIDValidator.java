@@ -39,7 +39,7 @@ public class PIDValidator {
     private PIDValidator() {
     }
 
-    static PIDValidationResult validatePids(InputStream inputStream, XPathContext xPathContext) throws XPathExpressionException {
+    static PIDValidationResult validatePids(InputStream inputStream, DDIVersion xPathContext) throws XPathExpressionException {
         var xpath = XPathFactory.newDefaultInstance().newXPath();
         xpath.setNamespaceContext(xPathContext.getNamespaceContext());
 

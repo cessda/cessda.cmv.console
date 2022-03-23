@@ -15,14 +15,24 @@
  */
 package eu.cessda.cmv.console;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import eu.cessda.cmv.core.ValidationGateName;
 
-import java.nio.file.Path;
+import java.net.URI;
 
+/**
+ * A configuration of a remote repository.
+ *
+ * @param code           the short name of the repository.
+ * @param ddiVersion     the DDI version of the metadata.
+ * @param profile        the CMV profile to validate against.
+ * @param validationGate the validation gate to use.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record Repository(
     String code,
-    String profile,
-    Path directory,
+    DDIVersion ddiVersion,
+    URI profile,
     ValidationGateName validationGate
 ) {
 }
