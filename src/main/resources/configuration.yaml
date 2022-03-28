@@ -70,6 +70,10 @@ repositories:
     directory: ./SASD/ddi_c/
     profile: DDI_2_5
     validationGate: BASIC
+   - code: SND
+    directory: ./SND/oai_ddi25/
+    profile: DDI_2_5
+    validationGate: BASIC
   - code: SND_EQB
     directory: ./SND/ddi_3_2/
     profile: DDI_3_2
