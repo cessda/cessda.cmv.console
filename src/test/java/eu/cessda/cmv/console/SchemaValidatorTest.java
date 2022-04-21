@@ -47,6 +47,17 @@ class SchemaValidatorTest {
     }
 
     @Test
+    void shouldValidateNesstarDocument() throws IOException, SAXException {
+        // Load a NESSTAR DDI document.
+        var nesstarDocument = this.getClass().getResourceAsStream("/nesstar/NSD1367.xml");
+
+        var schemaViolations = DDIVersion.NESSTAR.getSchemaValidator().getSchemaViolations(nesstarDocument);
+
+        // There should be 2 schema violations
+        assertEquals(2, schemaViolations.size());
+    }
+
+    @Test
     void shouldThrowOnFatalError() {
         var emptyStream = InputStream.nullInputStream();
 
