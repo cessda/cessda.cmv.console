@@ -26,8 +26,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum SchemaValidator {
-    DDI_2_5("/schemas/codebook/codebook.xsd"), DDI_3_2("/schemas/lifecycle/instance.xsd");
+public class SchemaValidator {
 
     private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal;
 

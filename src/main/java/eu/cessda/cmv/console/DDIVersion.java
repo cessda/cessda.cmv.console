@@ -17,17 +17,20 @@ package eu.cessda.cmv.console;
 
 import javax.xml.namespace.NamespaceContext;
 import java.util.Iterator;
-
-enum XPathContext {
-    DDI_2_5(buildContext("ddi:codebook:2_5"), "//ddi:codeBook//ddi:stdyDscr/ddi:citation/ddi:titlStmt/ddi:IDNo"),
-    NESSTAR(buildContext("http://www.icpsr.umich.edu/DDI"), "//ddi:codeBook/stdyDscr/citation/titlStmt/IDNo");
+// TODO - configure this from external sources
+enum DDIVersion {
+    DDI_3_2(buildContext("ddi:instance:3_2"), "//ddi:DDIInstance/s:StudyUnit/r:Citation/r:InternationalIdentifier/r:IdentifierContent", new SchemaValidator("/schemas/lifecycle/instance.xsd")),
+    DDI_2_5(buildContext("ddi:codebook:2_5"), "//ddi:codeBook//ddi:stdyDscr/ddi:citation/ddi:titlStmt/ddi:IDNo", new SchemaValidator("/schemas/codebook/codebook.xsd")),
+    NESSTAR(buildContext("http://www.icpsr.umich.edu/DDI"), "//ddi:codeBook/stdyDscr/citation/titlStmt/IDNo", new SchemaValidator("/schemas/nesstar/Version1-2-2.xsd"));
 
     private final NamespaceContext namespaceContext;
-    private final String xPath;
+    private final String pidXPath;
+    private final SchemaValidator schemaValidator;
 
-    XPathContext(NamespaceContext namespaceContext, String xPath) {
+    DDIVersion(NamespaceContext namespaceContext, String pidXPath, SchemaValidator schemaValidator) {
         this.namespaceContext = namespaceContext;
-        this.xPath = xPath;
+        this.pidXPath = pidXPath;
+        this.schemaValidator = schemaValidator;
     }
 
     private static NamespaceContext buildContext(String namespaceURI) {
@@ -54,6 +57,10 @@ enum XPathContext {
     }
 
     public String getXPath() {
-        return xPath;
+        return pidXPath;
+    }
+
+    public SchemaValidator getSchemaValidator() {
+        return schemaValidator;
     }
 }

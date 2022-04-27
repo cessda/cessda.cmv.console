@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,8 +32,8 @@ class ValidatorTest {
 
     private final Configuration configuration;
 
-    ValidatorTest() throws IOException {
-        configuration = Validator.parseConfiguration();
+    ValidatorTest() {
+        configuration = new Configuration(Path.of("input"), null, null);
     }
 
     @Test
@@ -43,7 +44,12 @@ class ValidatorTest {
         var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
         try (var directoryStream = Files.newDirectoryStream(ddi25Documents)) {
             for (var document : directoryStream) {
-                var validationResultsEntry = validator.validateDocuments(document, configuration.profiles().get("DDI_2_5"), ValidationGateName.BASIC);
+                var validationResultsEntry = validator.validateDocuments(
+                    document,
+                    DDIVersion.DDI_2_5,
+                    URI.create("https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml"),
+                    ValidationGateName.BASIC
+                );
                 resultsMap.put(validationResultsEntry.getKey(), validationResultsEntry.getValue());
             }
         }
@@ -61,6 +67,11 @@ class ValidatorTest {
         var validator = new Validator(configuration);
 
         var invalidDocument = Path.of(this.getClass().getResource("/malformed.xml").toURI());
-        assertThrows(SAXException.class, () -> validator.validateDocuments(invalidDocument, configuration.profiles().get("DDI_2_5"), ValidationGateName.BASIC));
+        assertThrows(SAXException.class, () -> validator.validateDocuments(
+            invalidDocument,
+            DDIVersion.DDI_2_5,
+            URI.create("https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml"),
+            ValidationGateName.BASIC)
+        );
     }
 }
