@@ -14,6 +14,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [2.0.0] - 2022-06-07
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6577771.svg)](https://doi.org/10.5281/zenodo.6577771)
+
+### Additions
+
+Added Jenkins and SonarQube badges [#435](https://bitbucket.org/cessda/cessda.cdc.versions/issues/435)
+
+Added new Progedo OAI-PMH endpoint [#403](https://bitbucket.org/cessda/cessda.cdc.versions/issues/403)
+
+Added a persistent identifier check [#320](https://bitbucket.org/cessda/cessda.cdc.versions/issues/320)
+
+### Changes
+
+Refactored the validator to read configuration from common file, removed local configuration and moved all configuration to command line arguments [#409](https://bitbucket.org/cessda/cessda.cdc.versions/issues/409)
+
+Improved the test coverage of the console validator [#391](https://bitbucket.org/cessda/cessda.cdc.versions/issues/391)
+
+### Fixed
+
+Reinstated OAI-PMH set name to harvester storage file path [#411](https://bitbucket.org/cessda/cessda.cdc.versions/issues/411)
+
+Workaround for XML schema violations caused by incorrect DDI serialisation [#388](https://bitbucket.org/cessda/cessda.cdc.versions/issues/388)
+
+
 ## [1.0.0] - 2021-11-25
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5711087.svg)](https://doi.org/10.5281/zenodo.5711087)
 
