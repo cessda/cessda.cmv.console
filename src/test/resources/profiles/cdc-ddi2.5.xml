@@ -186,7 +186,7 @@ ________________________________________________________________________________
             <r:Content>Required: Mandatory</r:Content>
             <r:Content>ElementType: Attribute</r:Content>
             <r:Content>Usage: Agency responsible for the identifier of the study. If you are using
-                IDNo for a Persistent Identifer, value should be one of
+                IDNo for a Persistent Identifier, value should be one of
                 https://vocabularies.cessda.eu/vocabulary/CessdaPersistentIdentifierTypes i.e. ARK or
                 DOI or Handle or URN
             </r:Content>

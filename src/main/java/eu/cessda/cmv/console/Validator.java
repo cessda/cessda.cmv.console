@@ -41,9 +41,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -124,12 +125,29 @@ public class Validator {
                 .toList();
         }
 
-        // Instance and run the validator
-        var timestamp = OffsetDateTime.now().toString();
-        MDC.put(MDC_KEY, timestamp);
-        new Validator(
+        // Instance the validator
+        var validator = new Validator(
             new Configuration(baseDirectory, destinationDirectory, wrappedDirectory)
-        ).validate(repositories, timestamp);
+        );
+        var timestamp = OffsetDateTime.now().toString();
+
+        // Discover repositories from instances of pipeline.json
+        MDC.put(MDC_KEY, timestamp);
+        try (var stream = Files.find(baseDirectory, Integer.MAX_VALUE,
+            (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
+                && path.getFileName().equals(Path.of("pipeline.json"))
+        )) {
+            var futures = stream.map(f -> CompletableFuture.supplyAsync(() -> {
+                try (var inputStream = Files.newInputStream(f)) {
+                    Repository r = reader.readValue(inputStream);
+                    return Map.entry(f.getParent(), r);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }).thenAccept(r -> validator.validateRepository(r, timestamp))).toArray(CompletableFuture[]::new);
+
+            CompletableFuture.allOf(futures).join();
+        }
     }
 
     /**
@@ -184,75 +202,74 @@ public class Validator {
     /**
      * Validate all configured repositories.
      */
-    private void validate(List<Map.Entry<Path, Repository>> repositories, String timestamp) {
-        for (var repoMap : repositories) {
-            var repo = repoMap.getValue();
-            log.info("{}: Performing validation.", repo.code());
+    private void validateRepository(Map.Entry<Path, Repository> repoMap, String timestamp) {
+        var repo = repoMap.getValue();
+        log.info("{}: Performing validation.", repo.code());
 
-            // Create a stream of all XML files in the repository directory
-            try (var sourceFilesStream = Files.find(repoMap.getKey(), 1,
-                (path, basicFileAttributes) -> basicFileAttributes.isRegularFile() && FilenameUtils.isExtension(path.getFileName().toString(), "xml"))
-            ) {
-                var profile = repo.profile();
+        // Create a stream of all XML files in the repository directory
+        try (var sourceFilesStream = Files.find(repoMap.getKey(), 1,
+            (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
+                && FilenameUtils.isExtension(path.getFileName().toString(), "xml"))
+        ) {
+            var profile = repo.profile();
 
-                var recordCounter = new AtomicInteger();
-                var invalidRecordsCounter = new AtomicInteger();
+            var recordCounter = new AtomicInteger();
+            var invalidRecordsCounter = new AtomicInteger();
 
-                // Collecting to a list allows better parallelisation behavior as the overall size is known
-                var copiedFiles = sourceFilesStream.toList().parallelStream()
-                    .flatMap(file -> {
-                        try {
-                            MDC.put(MDC_KEY, timestamp);
-                            return Stream.of(validateDocuments(file, repo.ddiVersion(), profile, repo.validationGate()));
-                        } catch (RuntimeException | IOException | SAXException | OutOfMemoryError e) {
-                            // Handle unexpected exceptions and out of memory errors
-                            log.error("{}: Validation of {} failed", repo.code(), file, e);
-                        }
-                        return Stream.empty();
-                    })
-                    .flatMap(report -> {
-                        recordCounter.incrementAndGet();
+            // Collecting to a list allows better parallelisation behavior as the overall size is known
+            var futures = sourceFilesStream.map(file -> CompletableFuture.supplyAsync(() -> {
+                try {
+                    MDC.put(MDC_KEY, timestamp);
+                    return Optional.of(validateDocuments(file, repo.ddiVersion(), profile, repo.validationGate()));
+                } catch (RuntimeException | IOException | SAXException | OutOfMemoryError e) {
+                    // Handle unexpected exceptions and out of memory errors
+                    log.error("{}: Validation of {} failed", repo.code(), file, e);
+                }
+                return Optional.<Map.Entry<Path, ValidationResults>>empty();
+            }).thenApply(r -> r.flatMap(report -> {
+                recordCounter.incrementAndGet();
 
-                        // Report PID validation errors, these are informative
-                        if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().valid()) {
-                            try {
-                                var pidJson = objectMapper.writeValueAsString(report.getValue().pidValidationResult());
-                                log.info("{}: {} has no valid persistent identifiers{}",
-                                    value(REPO_NAME, repo.code()),
-                                    value("oai_record", URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8)),
-                                    keyValue("pid_report", pidJson, "")
-                                );
-                            } catch (JsonProcessingException e) {
-                                log.error("{}: Failed to write PID report for {}.", repo.code(), report.getKey(), e);
-                            }
-                        }
-
-                        if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
-                            invalidRecordsCounter.incrementAndGet();
-                            MDC.put(MDC_KEY, timestamp);
-                            reportValidationErrors(repo, profile, report);
-                        } else {
-                            if (configuration.destinationDirectory() != null) {
-                                return copyToDestination(report.getKey()).stream();
-                            }
-                        }
-                        return Stream.empty();
-                    }).collect(Collectors.toSet());
-
-                // Clean up files.
-                if (configuration.destinationDirectory() != null) {
-                    deleteOrphanedRecords(repoMap, copiedFiles);
+                // Report PID validation errors, these are informative
+                if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().valid()) {
+                    try {
+                        var pidJson = objectMapper.writeValueAsString(report.getValue().pidValidationResult());
+                        log.info("{}: {} has no valid persistent identifiers{}",
+                            value(REPO_NAME, repo.code()),
+                            value("oai_record", URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8)),
+                            keyValue("pid_report", pidJson, "")
+                        );
+                    } catch (JsonProcessingException e) {
+                        log.error("{}: Failed to write PID report for {}.", repo.code(), report.getKey(), e);
+                    }
                 }
 
-                log.info("{}: {}: Validated {} records, {} invalid",
-                    value(REPO_NAME, repo.code()),
-                    value("profile_name", profile),
-                    value("validated_records", recordCounter),
-                    value("invalid_records", invalidRecordsCounter)
-                );
-            } catch (IOException | OutOfMemoryError | ProfileLoadFailedException e) {
-                log.error("Failed to validate {}: {}", repo.code(), e.toString());
+                if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
+                    invalidRecordsCounter.incrementAndGet();
+                    MDC.put(MDC_KEY, timestamp);
+                    reportValidationErrors(repo, profile, report);
+                } else {
+                    if (configuration.destinationDirectory() != null) {
+                        return copyToDestination(report.getKey());
+                    }
+                }
+                return Optional.empty();
+            }))).toList();
+
+            var copiedFiles = futures.stream().map(CompletableFuture::join).flatMap(Optional::stream).collect(Collectors.toSet());
+
+            // Clean up files.
+            if (configuration.destinationDirectory() != null) {
+                deleteOrphanedRecords(repoMap, copiedFiles);
             }
+
+            log.info("{}: {}: Validated {} records, {} invalid",
+                value(REPO_NAME, repo.code()),
+                value("profile_name", profile),
+                value("validated_records", recordCounter),
+                value("invalid_records", invalidRecordsCounter)
+            );
+        } catch (IOException | ProfileLoadFailedException | CompletionException e) {
+            log.error("Failed to validate {}: {}", repo.code(), e.toString());
         }
     }
 
