@@ -109,22 +109,6 @@ public class Validator {
             }
         }
 
-        // Discover repositories from instances of metadata.json
-        List<Map.Entry<Path, Repository>> repositories;
-        try (var stream = Files.walk(baseDirectory)) {
-            repositories = stream
-                .filter(f -> f.getFileName().equals(Path.of("pipeline.json")))
-                .map(f -> {
-                    try (var inputStream = Files.newInputStream(f)) {
-                        Repository r = reader.readValue(inputStream);
-                        return Map.entry(f.getParent(), new Repository(r.code(), r.ddiVersion(), r.profile(), r.validationGate()));
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                })
-                .toList();
-        }
-
         // Instance the validator
         var validator = new Validator(
             new Configuration(baseDirectory, destinationDirectory, wrappedDirectory)
@@ -218,42 +202,47 @@ public class Validator {
 
             // Collecting to a list allows better parallelisation behavior as the overall size is known
             var futures = sourceFilesStream.map(file -> CompletableFuture.supplyAsync(() -> {
-                try {
+
+                // Set the MDC context in the resulting thread
+                if (MDC.get(MDC_KEY) != null) {
                     MDC.put(MDC_KEY, timestamp);
-                    return Optional.of(validateDocuments(file, repo.ddiVersion(), profile, repo.validationGate()));
+                }
+
+                try {
+
+                    var report = validateDocuments(file, repo.ddiVersion(), profile, repo.validationGate());
+
+                    recordCounter.incrementAndGet();
+
+                    // Report PID validation errors, these are informative
+                    if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().valid()) {
+                        try {
+                            var pidJson = objectMapper.writeValueAsString(report.getValue().pidValidationResult());
+                            log.info("{}: {} has no valid persistent identifiers{}",
+                                value(REPO_NAME, repo.code()),
+                                value("oai_record", URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8)),
+                                keyValue("pid_report", pidJson, "")
+                            );
+                        } catch (JsonProcessingException e) {
+                            log.error("{}: Failed to write PID report for {}.", repo.code(), report.getKey(), e);
+                        }
+                    }
+
+                    if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
+                        invalidRecordsCounter.incrementAndGet();
+                        MDC.put(MDC_KEY, timestamp);
+                        reportValidationErrors(repo, profile, report);
+                    } else {
+                        if (configuration.destinationDirectory() != null) {
+                            return copyToDestination(report.getKey());
+                        }
+                    }
                 } catch (RuntimeException | IOException | SAXException | OutOfMemoryError e) {
                     // Handle unexpected exceptions and out of memory errors
                     log.error("{}: Validation of {} failed", repo.code(), file, e);
                 }
-                return Optional.<Map.Entry<Path, ValidationResults>>empty();
-            }).thenApply(r -> r.flatMap(report -> {
-                recordCounter.incrementAndGet();
-
-                // Report PID validation errors, these are informative
-                if (report.getValue().pidValidationResult() != null && !report.getValue().pidValidationResult().valid()) {
-                    try {
-                        var pidJson = objectMapper.writeValueAsString(report.getValue().pidValidationResult());
-                        log.info("{}: {} has no valid persistent identifiers{}",
-                            value(REPO_NAME, repo.code()),
-                            value("oai_record", URLDecoder.decode(removeExtension(report.getKey().getFileName().toString()), UTF_8)),
-                            keyValue("pid_report", pidJson, "")
-                        );
-                    } catch (JsonProcessingException e) {
-                        log.error("{}: Failed to write PID report for {}.", repo.code(), report.getKey(), e);
-                    }
-                }
-
-                if (!report.getValue().report().getConstraintViolations().isEmpty() || !report.getValue().schemaViolations().isEmpty()) {
-                    invalidRecordsCounter.incrementAndGet();
-                    MDC.put(MDC_KEY, timestamp);
-                    reportValidationErrors(repo, profile, report);
-                } else {
-                    if (configuration.destinationDirectory() != null) {
-                        return copyToDestination(report.getKey());
-                    }
-                }
-                return Optional.empty();
-            }))).toList();
+                return Optional.<Path>empty();
+            })).toList();
 
             var copiedFiles = futures.stream().map(CompletableFuture::join).flatMap(Optional::stream).collect(Collectors.toSet());
 
