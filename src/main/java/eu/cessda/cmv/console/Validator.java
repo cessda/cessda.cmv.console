@@ -167,7 +167,7 @@ public class Validator {
             pidValidationResult = PIDValidator.validatePids(new ByteArrayInputStream(buffer), ddiVersion);
         } catch (XPathExpressionException e) {
             pidValidationResult = null;
-            log.error(e.toString());
+            log.error("PID validation of {} failed: {}", documentPath, e.toString());
         }
 
         // Validate against CMV profile
