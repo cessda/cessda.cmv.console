@@ -55,33 +55,30 @@ public class PIDValidator {
             // Holds the state of the PID
             var state = EnumSet.noneOf(PID.State.class);
 
+            // Extract persistent identifiers from the element
+            var pidElement = xPathContext.getPid(iDNoElement.item(i));
+
             // Validate URI and check if the URI is absolute.
-            var agencyURIString = iDNoElement.item(i).getTextContent().trim();
             try {
                 // Run the constructor
-                var uri = new URI(agencyURIString);
+                var uri = new URI(pidElement.uri());
                 if (uri.isAbsolute()) {
                     // A valid absolute URI was found.
                     state.add(PID.State.VALID_URI);
                 }
             } catch (URISyntaxException e) {
-                log.debug("Invalid uri: {}", agencyURIString);
+                log.debug("Invalid uri: {}", pidElement.uri());
             }
 
 
             // Check if an agency attribute is present, and whether it has an allowed value.
-            var agencyNode = iDNoElement.item(i).getAttributes().getNamedItem("agency");
-            final String agencyTextContent;
-            if (agencyNode != null) {
+            if (pidElement.agency() != null) {
                 state.add(PID.State.AGENCY_PRESENT);
-                agencyTextContent = agencyNode.getTextContent();
-                if (ALLOWED_AGENCY_VALUES.contains(agencyTextContent)) {
+                if (ALLOWED_AGENCY_VALUES.contains(pidElement.agency())) {
                     state.add(PID.State.AGENCY_ALLOWED_VALUE);
                 } else {
-                    log.debug("Invalid agency: {}", agencyTextContent);
+                    log.debug("Invalid agency: {}", pidElement.agency());
                 }
-            } else {
-                agencyTextContent = null;
             }
 
             // If all states are present, then the PID is valid
@@ -89,7 +86,7 @@ public class PIDValidator {
                 validPids = true;
             }
 
-            pidList.add(new PID(agencyTextContent, agencyURIString, state));
+            pidList.add(new PID(pidElement.agency(), pidElement.uri(), state));
         }
 
         return new PIDValidationResult(validPids, pidList);

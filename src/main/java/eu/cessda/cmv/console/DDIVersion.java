@@ -15,29 +15,75 @@
  */
 package eu.cessda.cmv.console;
 
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import javax.xml.namespace.NamespaceContext;
+import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.function.Function;
+
 // TODO - configure this from external sources
 enum DDIVersion {
-    DDI_3_2(buildContext("ddi:instance:3_2"), "//ddi:DDIInstance/s:StudyUnit/r:Citation/r:InternationalIdentifier/r:IdentifierContent", new SchemaValidator("/schemas/lifecycle/instance.xsd")),
-    DDI_2_5(buildContext("ddi:codebook:2_5"), "//ddi:codeBook//ddi:stdyDscr/ddi:citation/ddi:titlStmt/ddi:IDNo", new SchemaValidator("/schemas/codebook/codebook.xsd")),
-    NESSTAR(buildContext("http://www.icpsr.umich.edu/DDI"), "//ddi:codeBook/stdyDscr/citation/titlStmt/IDNo", new SchemaValidator("/schemas/nesstar/Version1-2-2.xsd"));
+    DDI_3_2(
+        buildContext(Map.ofEntries(
+            Map.entry("ddi", "ddi:instance:3_2"),
+            Map.entry("s", "ddi:studyunit:3_2"),
+            Map.entry("r", "ddi:reusable:3_2")
+        )),
+        "//r:Citation/r:InternationalIdentifier",
+        new SchemaValidator("/schemas/lifecycle/instance.xsd"),
+        node -> {
+            String agency = null;
+            String uri = null;
+
+            var childNodeList = node.getChildNodes();
+            for (int i = 0; i < childNodeList.getLength(); i++) {
+                var childNode = childNodeList.item(i);
+
+                // Select child elements
+                if (childNode instanceof Element) {
+                    switch (((Element) childNode).getTagName()) {
+                        case "r:ManagingAgency" -> agency = childNode.getTextContent().trim();
+                        case "r:IdentifierContent" -> uri = childNode.getTextContent().trim();
+                    }
+                }
+            }
+
+            return new PID(agency, uri, EnumSet.noneOf(PID.State.class));
+        }
+    ),
+    DDI_2_5(
+        buildContext(Map.of("ddi", "ddi:codebook:2_5")),
+        "//ddi:codeBook//ddi:stdyDscr/ddi:citation/ddi:titlStmt/ddi:IDNo",
+        new SchemaValidator("/schemas/codebook/codebook.xsd"),
+        DDIVersion::getDDI25PID
+    ),
+    NESSTAR(
+        buildContext(Map.of("ddi", "http://www.icpsr.umich.edu/DDI")),
+        "//ddi:codeBook/stdyDscr/citation/titlStmt/IDNo",
+        new SchemaValidator("/schemas/nesstar/Version1-2-2.xsd"),
+        DDIVersion::getDDI25PID
+    );
 
     private final NamespaceContext namespaceContext;
     private final String pidXPath;
     private final SchemaValidator schemaValidator;
+    private final Function<Node, PID> getPid;
 
-    DDIVersion(NamespaceContext namespaceContext, String pidXPath, SchemaValidator schemaValidator) {
+    DDIVersion(NamespaceContext namespaceContext, String pidXPath, SchemaValidator schemaValidator, Function<Node, PID> getPid) {
         this.namespaceContext = namespaceContext;
         this.pidXPath = pidXPath;
         this.schemaValidator = schemaValidator;
+        this.getPid = getPid;
     }
 
-    private static NamespaceContext buildContext(String namespaceURI) {
+    private static NamespaceContext buildContext(Map<String, String> namespaces) {
         return new NamespaceContext() {
             @Override
             public String getNamespaceURI(String prefix) {
-                return "ddi".equals(prefix) ? namespaceURI : null;
+                return namespaces.get(prefix);
             }
 
             @Override
@@ -52,6 +98,17 @@ enum DDIVersion {
         };
     }
 
+    private static PID getDDI25PID(Node node) {
+        String agency = null;
+
+        var agencyAttribute = node.getAttributes().getNamedItem("agency");
+        if (agencyAttribute != null) {
+            agency = agencyAttribute.getTextContent();
+        }
+
+        return new PID(agency, node.getTextContent().trim(), EnumSet.noneOf(PID.State.class));
+    }
+
     public NamespaceContext getNamespaceContext() {
         return namespaceContext;
     }
@@ -62,5 +119,14 @@ enum DDIVersion {
 
     public SchemaValidator getSchemaValidator() {
         return schemaValidator;
+    }
+
+    /**
+     * Get the agency associated with the persistent identifier.
+     * @param n the node
+     * @return the agency.
+     */
+    public PID getPid(Node n) {
+        return getPid.apply(n);
     }
 }
