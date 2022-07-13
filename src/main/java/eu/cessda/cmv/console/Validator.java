@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -121,14 +122,16 @@ public class Validator {
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
                 && path.getFileName().equals(Path.of("pipeline.json"))
         )) {
-            var futures = stream.map(f -> CompletableFuture.supplyAsync(() -> {
+            // Create a single thread executor to run the validation from
+            var executor = Executors.newSingleThreadExecutor();
+            var futures = stream.map(f -> {
                 try (var inputStream = Files.newInputStream(f)) {
                     Repository r = reader.readValue(inputStream);
                     return Map.entry(f.getParent(), r);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
-            }).thenAcceptAsync(r -> validator.validateRepository(r, timestamp))).toArray(CompletableFuture[]::new);
+            }).map(r -> CompletableFuture.runAsync(() -> validator.validateRepository(r, timestamp), executor)).toArray(CompletableFuture[]::new);
 
             CompletableFuture.allOf(futures).join();
         }
