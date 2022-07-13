@@ -128,7 +128,7 @@ public class Validator {
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
-            }).thenAccept(r -> validator.validateRepository(r, timestamp))).toArray(CompletableFuture[]::new);
+            }).thenAcceptAsync(r -> validator.validateRepository(r, timestamp))).toArray(CompletableFuture[]::new);
 
             CompletableFuture.allOf(futures).join();
         }
