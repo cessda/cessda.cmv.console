@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -62,10 +63,12 @@ public class Validator {
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
     private static final ValidationReportV0 EMPTY_VALIDATION_REPORT = new ValidationReportV0();
+    private static final ExecutorService threadPool = Executors.newWorkStealingPool();
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
     private final ProfileValidator profileValidator = new ProfileValidator();
+
 
     public Validator(Configuration configuration) {
         this.configuration = configuration;
@@ -245,7 +248,7 @@ public class Validator {
                     log.error("{}: Validation of {} failed", repo.code(), file, e);
                 }
                 return Optional.<Path>empty();
-            })).toList();
+            }, threadPool)).toList();
 
             var copiedFiles = futures.stream().map(CompletableFuture::join).flatMap(Optional::stream).collect(Collectors.toSet());
 
