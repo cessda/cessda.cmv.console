@@ -147,7 +147,7 @@ public class Validator {
      * @param ddiVersion     the DDI version of the document.
      * @param profile        the profile to validate with.
      * @param validationGate the {@link ValidationGateName} to use.
-     * @return a {@link Map.Entry} with the key set to the URL decoded file name, and the value set to the validation results.
+     * @return a {@link Map.Entry} with the key set to the file name, and the value set to the validation results.
      * @throws RuntimeException if an error occurs during the validation.
      * @throws SAXException     if the document doesn't conform to the DDI schema.
      * @throws IOException      if an IO error occurred.
@@ -206,11 +206,11 @@ public class Validator {
             var recordCounter = new AtomicInteger();
             var invalidRecordsCounter = new AtomicInteger();
 
-            // Collecting to a list allows better parallelisation behavior as the overall size is known
+            // Each validation is scheduled to run asynchronously whilst files are being discovered.
             var futures = sourceFilesStream.map(file -> CompletableFuture.supplyAsync(() -> {
 
                 // Set the MDC context in the resulting thread
-                if (MDC.get(MDC_KEY) != null) {
+                if (MDC.get(MDC_KEY) == null) {
                     MDC.put(MDC_KEY, timestamp);
                 }
 
