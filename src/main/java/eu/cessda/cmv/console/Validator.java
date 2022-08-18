@@ -189,10 +189,18 @@ public class Validator {
         return Map.entry(documentPath, new ValidationResults(errors, pidValidationResult, validationReport));
     }
 
+    private static void configureMDC(String timestamp) {
+        if (MDC.get(MDC_KEY) == null) {
+            MDC.put(MDC_KEY, timestamp);
+        }
+    }
+
     /**
      * Validate all configured repositories.
      */
     private void validateRepository(Map.Entry<Path, Repository> repoMap, String timestamp) {
+        configureMDC(timestamp);
+
         var repo = repoMap.getValue();
         log.info("{}: Performing validation.", repo.code());
 
@@ -209,10 +217,7 @@ public class Validator {
             // Each validation is scheduled to run asynchronously whilst files are being discovered.
             var futures = sourceFilesStream.map(file -> CompletableFuture.supplyAsync(() -> {
 
-                // Set the MDC context in the resulting thread
-                if (MDC.get(MDC_KEY) == null) {
-                    MDC.put(MDC_KEY, timestamp);
-                }
+                configureMDC(timestamp);
 
                 try {
 
