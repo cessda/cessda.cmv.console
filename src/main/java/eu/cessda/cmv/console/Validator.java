@@ -119,14 +119,15 @@ public class Validator {
         );
         var timestamp = OffsetDateTime.now().toString();
 
+        // Create a single thread executor to run the validation from
+        var executor = Executors.newSingleThreadExecutor();
+
         // Discover repositories from instances of pipeline.json
         MDC.put(MDC_KEY, timestamp);
         try (var stream = Files.find(baseDirectory, Integer.MAX_VALUE,
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
                 && path.getFileName().equals(Path.of("pipeline.json"))
         )) {
-            // Create a single thread executor to run the validation from
-            var executor = Executors.newSingleThreadExecutor();
             var futures = stream.map(f -> {
                 try (var inputStream = Files.newInputStream(f)) {
                     Repository r = reader.readValue(inputStream);
@@ -137,6 +138,9 @@ public class Validator {
             }).map(r -> CompletableFuture.runAsync(() -> validator.validateRepository(r, timestamp), executor)).toArray(CompletableFuture[]::new);
 
             CompletableFuture.allOf(futures).join();
+        } finally {
+            executor.shutdown();
+            threadPool.shutdown();
         }
     }
 
