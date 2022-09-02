@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [3.0.2] - 2022-09-06
+
+### Changes
+
+- Optimised the parallelization of the validator by making the validator asynchronous ([#445](https://bitbucket.org/cessda/cessda.cdc.versions/issues/445))
+- Rename `XPathContext` to `DDIVersion`, the new name reflects the purpose of the enum ([#445](https://bitbucket.org/cessda/cessda.cdc.versions/issues/445))
+
+### Fixes
+
+- Fixed incorrect validation of DDI 3.2 persistent identifiers ([#449](https://bitbucket.org/cessda/cessda.cdc.versions/issues/449))
+- Fixed not including the validator job ID in the output ([#451](https://bitbucket.org/cessda/cessda.cdc.versions/issues/451))
+
 ## [2.0.0] - 2022-06-07
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6577771.svg)](https://doi.org/10.5281/zenodo.6577771)
