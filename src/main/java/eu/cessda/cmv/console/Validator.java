@@ -37,7 +37,7 @@ import java.nio.file.DirectoryIteratorException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -259,7 +259,8 @@ public class Validator {
                 return Optional.<Path>empty();
             }, threadPool)).toList();
 
-            var copiedFiles = futures.stream().map(CompletableFuture::join).flatMap(Optional::stream).collect(Collectors.toSet());
+            var copiedFiles = futures.stream().map(CompletableFuture::join).flatMap(Optional::stream)
+                .map(Path::getFileName).collect(Collectors.toCollection(HashSet::new));
 
             // Clean up files.
             if (configuration.destinationDirectory() != null) {
@@ -358,20 +359,30 @@ public class Validator {
      * Delete orphaned records from the destination directory.
      *
      * @param repository the source repository.
-     * @param records    the collection of record paths that passed validation.
+     * @param records    a {@link HashSet} of record paths that passed validation.
      */
-    private void deleteOrphanedRecords(Map.Entry<Path, Repository> repository, Collection<Path> records) {
-        var destinationPath = configuration.destinationDirectory().resolve(repository.getKey()).normalize();
+    private void deleteOrphanedRecords(Map.Entry<Path, Repository> repository, HashSet<Path> records) {
+        // Convert the absolute path into a relative path from the root XML directory, then map the destination path.
+        var relativePath = configuration.rootDirectory().relativize(repository.getKey());
+        var destinationPath = configuration.destinationDirectory().resolve(relativePath);
+        int filesDeleted = 0;
         try (var directoryStream = Files.newDirectoryStream(destinationPath)) {
             for (var file : directoryStream) {
-                if (!records.contains(file)) {
+                // Ignore instances of pipeline.json
+                if (!file.getFileName().toString().equals("pipeline.json") && !records.contains(file.getFileName())) {
                     // Delete the records.
                     Files.delete(file);
+                    filesDeleted++;
                     log.debug("{}: Deleted {}", repository.getValue().code(), file);
                 }
             }
         } catch (DirectoryIteratorException | IOException e) {
             log.warn("{}: Couldn't clean up: {}", repository.getValue().code(), e.toString());
+        }
+
+        // Log if files are deleted at INFO level, always log at debug
+        if (log.isDebugEnabled() || filesDeleted > 0) {
+            log.info("{}: {} orphaned records deleted", repository.getValue().code(), filesDeleted);
         }
     }
 }
