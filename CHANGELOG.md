@@ -14,12 +14,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [3.1.1] - 2022-11-08
+
+### Fixes
+
+- Fix the validator deleted orphaned records from the source directory rather than the destination
+  directory ([#485](https://bitbucket.org/cessda/cessda.cdc.versions/issues/485))
+
 ## [3.0.2] - 2022-09-06
 
 ### Changes
 
-- Optimised the parallelization of the validator by making the validator asynchronous ([#445](https://bitbucket.org/cessda/cessda.cdc.versions/issues/445))
-- Rename `XPathContext` to `DDIVersion`, the new name reflects the purpose of the enum ([#445](https://bitbucket.org/cessda/cessda.cdc.versions/issues/445))
+- Optimised the parallelization of the validator by making the validator
+  asynchronous ([#445](https://bitbucket.org/cessda/cessda.cdc.versions/issues/445))
+- Rename `XPathContext` to `DDIVersion`, the new name reflects the purpose of the
+  enum ([#445](https://bitbucket.org/cessda/cessda.cdc.versions/issues/445))
 
 ### Fixes
 
