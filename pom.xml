@@ -179,6 +179,7 @@
                         <exclude>Jenkinsfile</exclude>
                         <exclude>LICENSE.txt</exclude>
                         <exclude>**/README</exclude>
+                        <exclude>**/.m2/**</exclude>
                         <exclude>input/**</exclude>
                         <exclude>src/test/resources/**</exclude>
                         <exclude>src/main/resources/**</exclude>
