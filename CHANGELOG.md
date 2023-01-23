@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixes
 
-- Fix the validator deleted orphaned records from the source directory rather than the destination
+- Fix the validator deleting orphaned records from the source directory rather than the destination
   directory ([#485](https://bitbucket.org/cessda/cessda.cdc.versions/issues/485))
 
 ## [3.0.2] - 2022-09-06
