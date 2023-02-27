@@ -62,8 +62,14 @@ public class PIDValidator {
             try {
                 // Run the constructor
                 var uri = new URI(pidElement.uri());
-                if (uri.isAbsolute()) {
-                    // A valid absolute URI was found.
+
+                // Check if the URI is a valid DOI
+                if ("doi".equals(uri.getScheme())
+                    // Detect if the given URI is a DOI, stripping out the first / in the path if present
+                    || uri.getPath() != null && PIDValidator.doiStringValidator(uri.getPath().replaceFirst("^/", ""))
+                    // Detect if the URI is an HTTP(S) URL that is absolute
+                    // TODO - replace with more specific PID validation
+                    || ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) && uri.isAbsolute()) {
                     state.add(PID.State.VALID_URI);
                 }
             } catch (URISyntaxException e) {
@@ -90,5 +96,42 @@ public class PIDValidator {
         }
 
         return new PIDValidationResult(validPids, pidList);
+    }
+
+    /**
+     * Validate if the given input string is a valid DOI.
+     *
+     * @param input the DOI to validate
+     * @return {@code true} if the input is a valid DOI, {@code false} otherwise
+     */
+    static boolean doiStringValidator(String input) {
+        // Split using /
+        var splitInput = input.split("/", 2);
+
+        // Check if the DOI is made of two components, prefix and suffix
+        if (splitInput.length != 2) {
+            return false;
+        }
+
+        // Split the prefix into sections
+        var prefix = splitInput[0];
+        var splitPrefix = prefix.split("\\.");
+
+        // Directory indicator must be 10
+        if (!"10".equals(splitPrefix[0])) {
+            return false;
+        }
+
+        // Registrant codes and sub-elements should be integers
+        try {
+            for (int i = 1; i < splitPrefix.length; i++) {
+                Integer.parseInt(splitPrefix[1]);
+            }
+        } catch (NumberFormatException e) {
+            return false;
+        }
+
+        // Valid DOI
+        return true;
     }
 }

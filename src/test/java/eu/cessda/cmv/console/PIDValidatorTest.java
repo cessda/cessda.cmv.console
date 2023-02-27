@@ -16,6 +16,8 @@
 package eu.cessda.cmv.console;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.xml.xpath.XPathExpressionException;
 
@@ -45,5 +47,22 @@ class PIDValidatorTest {
 
         // Assert that no PIDs have a valid URI
         assertTrue(validationResult.invalidPIDs().stream().noneMatch(pid -> pid.state().contains(PID.State.VALID_URI)));
+    }
+
+    @Test
+    void shouldValidateDOI() {
+        var testDOI = "10.0.120/test/doi";
+        assertTrue(PIDValidator.doiStringValidator(testDOI));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "invalid.prefix/test/doi",
+        "10.invalid/test/doi",
+        "not-a-doi",
+        "10.123"
+    })
+    void shouldRejectInvalidDOI(String parameter) {
+        assertFalse(PIDValidator.doiStringValidator(parameter));
     }
 }
