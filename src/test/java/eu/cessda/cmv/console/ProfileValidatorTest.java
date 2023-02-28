@@ -16,6 +16,7 @@
 package eu.cessda.cmv.console;
 
 import eu.cessda.cmv.core.ValidationGateName;
+import org.gesis.commons.resource.Resource;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -31,9 +32,10 @@ class ProfileValidatorTest {
     @Test
     void shouldValidateDocument() throws URISyntaxException {
         var document = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
+        assert document != null;
 
         var results = profileValidator.validateAgainstProfile(
-            document, this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(), ValidationGateName.BASIC
+            Resource.newResource(document), this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(), ValidationGateName.BASIC
         );
 
         assertTrue(results.getConstraintViolations().isEmpty());
@@ -48,7 +50,7 @@ class ProfileValidatorTest {
         var nullInputStream = InputStream.nullInputStream();
 
         assertThrows(ProfileLoadFailedException.class, () ->
-            profileValidator.validateAgainstProfile(nullInputStream, uri, ValidationGateName.BASIC)
+            profileValidator.validateAgainstProfile(Resource.newResource(nullInputStream), uri, ValidationGateName.BASIC)
         );
     }
 }

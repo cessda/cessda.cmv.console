@@ -37,13 +37,13 @@ class PIDValidatorTest {
 
     @Test
     void shouldReportInvalidPIDs() throws XPathExpressionException {
-        var invalidDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
+        var invalidDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/invalid.xml");
 
         var validationResult = PIDValidator.validatePids(invalidDDIDocument, DDIVersion.DDI_2_5);
 
         // Assert that no valid PIDs are found
         assertFalse(validationResult.valid());
-        assertEquals(4, validationResult.invalidPIDs().size());
+        assertEquals(2, validationResult.invalidPIDs().size());
 
         // Assert that no PIDs have a valid URI
         assertTrue(validationResult.invalidPIDs().stream().noneMatch(pid -> pid.state().contains(PID.State.VALID_URI)));

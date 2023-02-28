@@ -67,9 +67,9 @@ public class PIDValidator {
                 if ("doi".equals(uri.getScheme())
                     // Detect if the given URI is a DOI, stripping out the first / in the path if present
                     || uri.getPath() != null && PIDValidator.doiStringValidator(uri.getPath().replaceFirst("^/", ""))
-                    // Detect if the URI is an HTTP(S) URL that is absolute
+                    // Detect if the URI is an HTTP(S) URL
                     // TODO - replace with more specific PID validation
-                    || ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) && uri.isAbsolute()) {
+                    || ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))) {
                     state.add(PID.State.VALID_URI);
                 }
             } catch (URISyntaxException e) {

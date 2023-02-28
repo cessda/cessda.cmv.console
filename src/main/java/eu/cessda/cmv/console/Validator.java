@@ -21,6 +21,7 @@ import eu.cessda.cmv.core.ValidationGateName;
 import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FilenameUtils;
+import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -30,6 +31,7 @@ import org.xml.sax.SAXParseException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -184,7 +186,17 @@ public class Validator {
         final ValidationReportV0 validationReport;
         if (validationGate != null) {
             log.debug("Validating {} against CMV profile {}", documentPath, profile);
-            validationReport = profileValidator.validateAgainstProfile(new ByteArrayInputStream(buffer), profile, validationGate);
+            validationReport = profileValidator.validateAgainstProfile(new Resource() {
+                @Override
+                public URI getUri() {
+                    return URI.create("urn:uuid:00000000-0000-0000-0000-000000000000");
+                }
+
+                @Override
+                public InputStream readInputStream() {
+                    return new ByteArrayInputStream(buffer);
+                }
+            }, profile, validationGate);
         } else {
             log.debug("CMV profile validation disabled for {}", documentPath);
             validationReport = EMPTY_VALIDATION_REPORT;

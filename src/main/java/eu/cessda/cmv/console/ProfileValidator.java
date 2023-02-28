@@ -22,7 +22,6 @@ import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
 import org.gesis.commons.resource.Resource;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,9 +29,17 @@ public class ProfileValidator {
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
     private final ConcurrentHashMap<URI, Resource> profileMap = new ConcurrentHashMap<>();
 
-    public ValidationReportV0 validateAgainstProfile(InputStream inputStream, URI profileURI, ValidationGateName validationGate) {
-        // Load the DDI profile
-        var profile = profileMap.computeIfAbsent(profileURI, u -> {
+    /**
+     * Validate the given XML document against a DDI profile.
+     *
+     * @param document       the document to validate
+     * @param profileURI     the profile to validate the document against
+     * @param validationGate the validation gate to use
+     * @return the validation report
+     */
+    public ValidationReportV0 validateAgainstProfile(Resource document, URI profile, ValidationGateName validationGate) {
+        // Load and cache the DDI profile
+        var profileResource = profileMap.computeIfAbsent(profile, u -> {
             try {
                 return Resource.newResource(u.toURL().openStream());
             } catch (IOException e) {
@@ -40,8 +47,6 @@ public class ProfileValidator {
             }
         });
 
-        var document = Resource.newResource(inputStream);
-
-        return validationService.validate(document, profile, validationGate);
+        return validationService.validate(document, profileResource, validationGate);
     }
 }
