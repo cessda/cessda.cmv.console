@@ -29,7 +29,7 @@ pipeline {
     }
 
 	stages {
-		// Building on master
+		// Building on main
 		stage('Pull SDK Docker Image') {
 		    agent {
 		        docker {
@@ -61,7 +61,7 @@ pipeline {
 							waitForQualityGate abortPipeline: false
 						}
                     }
-                    when { branch 'master' }
+                    when { branch 'main' }
                 }
             }
         }
@@ -73,13 +73,13 @@ pipeline {
                 }
                 sh "gcloud container images add-tag ${imageTag} ${docker_repo}/${productName}-${componentName}:${env.BRANCH_NAME}-latest"
             }
-            when { branch 'master' }
+            when { branch 'main' }
 		}
 		stage('Check Requirements and Deployments') {
 			steps {
-				build job: 'cessda.cdc.aggregator.deploy/master', parameters: [string(name: 'cmv', value: "${env.BRANCH_NAME}-${env.BUILD_NUMBER}")], wait: false
+				build job: 'cessda.cdc.aggregator.deploy/main', parameters: [string(name: 'cmv', value: "${env.BRANCH_NAME}-${env.BUILD_NUMBER}")], wait: false
 			}
-            when { branch 'master' }
+            when { branch 'main' }
 		}
 	}
 }

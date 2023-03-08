@@ -34,12 +34,12 @@
     </organization>
 
     <scm>
-        <connection>scm:git:https://bitbucket.org/cessda/cessda.cmv.console.git</connection>
-        <url>https://bitbucket.org/cessda/cessda.cmv.console</url>
+        <connection>scm:git:https://github.com/cessda/cessda.cmv.console.git</connection>
+        <url>https://github.com/cessda/cessda.cmv.console</url>
     </scm>
 
     <issueManagement>
-        <url>https://bitbucket.org/cessda/cessda.cdc.versions/issues?status=new&amp;status=open</url>
+        <url>https://github.com/cessda/cessda.cdc.versions/issues?status=new&amp;status=open</url>
         <system>BitBucket</system>
     </issueManagement>
 
