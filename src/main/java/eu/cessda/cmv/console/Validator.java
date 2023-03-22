@@ -32,7 +32,6 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.file.DirectoryIteratorException;
@@ -49,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -130,12 +130,13 @@ public class Validator {
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
                 && path.getFileName().equals(Path.of("pipeline.json"))
         )) {
-            var futures = stream.map(f -> {
+            var futures = stream.flatMap(f -> {
                 try (var inputStream = Files.newInputStream(f)) {
                     Repository r = reader.readValue(inputStream);
-                    return Map.entry(f.getParent(), r);
+                    return Stream.of(Map.entry(f.getParent(), r));
                 } catch (IOException e) {
-                    throw new UncheckedIOException(e);
+                    log.error("Couldn't load pipeline configuration at {}: {}", f, e.toString());
+                    return Stream.empty();
                 }
             }).map(r -> CompletableFuture.runAsync(() -> validator.validateRepository(r, timestamp), executor)).toArray(CompletableFuture[]::new);
 
