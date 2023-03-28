@@ -104,6 +104,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Log each record separately.
 - Remove CMV profile.
 
+[3.2.1]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.2.1
 [3.1.1]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.1.1
 [2.0.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/2.0.0
 [1.0.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/1.0.0
