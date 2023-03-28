@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+# [3.2.1] - 2023-03-28
+
+### Fixes
+
+- Fix crash when a pipeline.json file is invalid ([PR-3](https://github.com/cessda/cessda.cmv.console/pull/3))
+
 ## [3.1.1] - 2022-11-08
 
 ### Fixes
