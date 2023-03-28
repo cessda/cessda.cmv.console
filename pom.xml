@@ -21,7 +21,7 @@
 
     <groupId>eu.cessda.cmv</groupId>
     <artifactId>cmv-console</artifactId>
-    <version>3.2.1</version>
+    <version>3.2.2-SNAPSHOT</version>
     <name>CESSDA Metadata Validator: Command Line Runner</name>
     <url>https://cmv.cessda.eu/</url>
     <inceptionYear>2021</inceptionYear>
