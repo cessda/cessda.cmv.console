@@ -107,12 +107,12 @@ class ValidatorTest {
     }
 
     @Test
-    void shouldRunWithoutErrors(@TempDir Path tempDir) throws URISyntaxException, IOException {
+    void shouldCopyValidatedRecords(@TempDir Path source, @TempDir Path destination) throws URISyntaxException, IOException {
         // Discover test documents and copy them
         var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
         try (var fileList = Files.newDirectoryStream(ddi25Documents)) {
             for (var document : fileList) {
-                Files.copy(document, tempDir.resolve(document.getFileName()));
+                Files.copy(document, source.resolve(document.getFileName()));
             }
         } catch (IOException e) {
             throw new AssertionError(e);
@@ -125,8 +125,20 @@ class ValidatorTest {
             this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(),
             ValidationGateName.BASIC
         );
-        new ObjectMapper().writeValue(tempDir.resolve("pipeline.json").toFile(), repositoryConfiguration);
+        new ObjectMapper().writeValue(source.resolve("pipeline.json").toFile(), repositoryConfiguration);
 
-        assertDoesNotThrow(() -> Validator.main(new String[]{tempDir.toString()}));
+        assertDoesNotThrow(() -> Validator.main(new String[]{
+            source.toString(),
+            // Set the destination
+            "--destination", destination.toString()
+        }));
+
+        // Assert that files were copied
+        assertThat(destination)
+            // valid.xml and pid.xml are valid
+            .isDirectoryContaining("valid.xml")
+            .isDirectoryContaining("pid.xml")
+            // invalid.xml is invalid, and shouldn't be copied
+            .isDirectoryNotContaining("invalid.xml");
     }
 }
