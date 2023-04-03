@@ -28,12 +28,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 
 public class PIDValidator {
     private static final Logger log = LoggerFactory.getLogger(PIDValidator.class);
 
-    private static final Set<String> ALLOWED_AGENCY_VALUES = Set.of("ARK", "DOI", "Handle", "URN");
+    private static final Set<String> ALLOWED_AGENCY_VALUES = Set.of("ark", "doi", "handle", "urn");
     private static final EnumSet<PID.State> PID_STATES = EnumSet.allOf(PID.State.class);
 
     private PIDValidator() {
@@ -80,7 +81,7 @@ public class PIDValidator {
             // Check if an agency attribute is present, and whether it has an allowed value.
             if (pidElement.agency() != null) {
                 state.add(PID.State.AGENCY_PRESENT);
-                if (ALLOWED_AGENCY_VALUES.contains(pidElement.agency())) {
+                if (ALLOWED_AGENCY_VALUES.contains(pidElement.agency().toLowerCase(Locale.ROOT))) {
                     state.add(PID.State.AGENCY_ALLOWED_VALUE);
                 } else {
                     log.debug("Invalid agency: {}", pidElement.agency());

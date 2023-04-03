@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Minimal DDI 3.2 document to test PID validation -->
+<ddi:FragmentInstance xmlns:ddi="ddi:instance:3_2"
+                      xmlns:r="ddi:reusable:3_2"
+                      xmlns:s="ddi:studyunit:3_2"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="ddi:instance:3_2 http://www.ddialliance.org/Specification/DDI-Lifecycle/3.2/XMLSchema/instance.xsd">
+    <ddi:TopLevelReference>
+        <r:Agency>fr.cdsp</r:Agency>
+        <r:ID>cc15ae64-d69a-45ea-83b9-04221a08cd44</r:ID>
+        <r:Version>89</r:Version>
+        <r:TypeOfObject>StudyUnit</r:TypeOfObject>
+    </ddi:TopLevelReference>
+    <ddi:Fragment>
+        <s:StudyUnit isUniversallyUnique="true" versionDate="2022-07-06T08:34:07.0232607Z">
+            <r:Agency>Agency</r:Agency>
+            <r:ID>id</r:ID>
+            <r:Version>1</r:Version>
+            <r:Citation>
+                <r:InternationalIdentifier>
+                    <r:IdentifierContent>test-identifier</r:IdentifierContent>
+                    <r:ManagingAgency>eu.cessda</r:ManagingAgency>
+                </r:InternationalIdentifier>
+                <!-- Set the default namespace to ddi:reusable:3_2, this should be equivalent to the above representation -->
+                <InternationalIdentifier xmlns="ddi:reusable:3_2">
+                    <IdentifierContent>doi:10.21410/7E4/XKHCPM</IdentifierContent>
+                    <ManagingAgency>doi</ManagingAgency>
+                </InternationalIdentifier>
+            </r:Citation>
+        </s:StudyUnit>
+    </ddi:Fragment>
+</ddi:FragmentInstance>

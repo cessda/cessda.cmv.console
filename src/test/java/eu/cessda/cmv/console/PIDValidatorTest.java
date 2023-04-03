@@ -30,7 +30,7 @@ class PIDValidatorTest {
 
         var validationResult = PIDValidator.validatePids(validDDIDocument, DDIVersion.DDI_2_5);
 
-        // Assert that no invalid PIDs were returned
+        // Assert that the document was treated as valid and that 2 PIDs were validated
         assertTrue(validationResult.valid());
         assertEquals(2, validationResult.invalidPIDs().size());
     }
@@ -47,6 +47,17 @@ class PIDValidatorTest {
 
         // Assert that no PIDs have a valid URI
         assertTrue(validationResult.invalidPIDs().stream().noneMatch(pid -> pid.state().contains(PID.State.VALID_URI)));
+    }
+
+    @Test
+    void shouldValidatePIDsInDDI3Document() throws XPathExpressionException {
+        var validDDIDocument = this.getClass().getResourceAsStream("/ddi_3_2/valid.xml");
+
+        var validationResult = PIDValidator.validatePids(validDDIDocument, DDIVersion.DDI_3_2);
+
+        // Assert that the document was treated as valid and that 2 PIDs were validated
+        assertTrue(validationResult.valid());
+        assertEquals(2, validationResult.invalidPIDs().size());
     }
 
     @Test

@@ -42,6 +42,9 @@ public class SchemaValidator {
                 throw new IllegalStateException(e);
             }
         });
+
+        // Validate parameters now rather than when a validation is run
+        validatorThreadLocal.get();
     }
 
     /**
