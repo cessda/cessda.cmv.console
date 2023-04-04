@@ -136,9 +136,9 @@ class ValidatorTest {
         // Assert that files were copied
         assertThat(destination)
             // valid.xml and pid.xml are valid
-            .isDirectoryContaining("valid.xml")
-            .isDirectoryContaining("pid.xml")
+            .isDirectoryContaining("glob:**/valid.xml")
+            .isDirectoryContaining("glob:**/pid.xml")
             // invalid.xml is invalid, and shouldn't be copied
-            .isDirectoryNotContaining("invalid.xml");
+            .isDirectoryNotContaining("glob:**/invalid.xml");
     }
 }
