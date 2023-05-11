@@ -43,7 +43,7 @@ class ValidatorTest {
 
     @Test
     void shouldValidateDocuments() throws IOException, SAXException, URISyntaxException {
-        var validator = new Validator(configuration);
+        var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
         var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
@@ -69,7 +69,7 @@ class ValidatorTest {
 
     @Test
     void shouldSkipCMVWhenProfileIsNotProvided() throws IOException, SAXException, URISyntaxException {
-        var validator = new Validator(configuration);
+        var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
         var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
@@ -95,7 +95,7 @@ class ValidatorTest {
 
     @Test
     void shouldThrowOnInvalidXML() throws URISyntaxException {
-        var validator = new Validator(configuration);
+        var validator = new Validator(configuration, new ObjectMapper());
 
         var invalidDocument = Path.of(this.getClass().getResource("/malformed.xml").toURI());
         assertThrows(SAXException.class, () -> validator.validateDocuments(
