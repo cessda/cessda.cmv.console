@@ -44,13 +44,14 @@ enum DDIVersion {
 
                 // Select child elements
                 if (childNode instanceof Element) {
-                    switch (((Element) childNode).getTagName()) {
-                        case "r:ManagingAgency" -> agency = childNode.getTextContent().trim();
-                        case "r:IdentifierContent" -> uri = childNode.getTextContent().trim();
+                    switch (childNode.getLocalName()) {
+                        case "ManagingAgency" -> agency = childNode.getTextContent().trim();
+                        case "IdentifierContent" -> uri = childNode.getTextContent().trim();
                     }
                 }
             }
 
+            // Return a new PID object with the validation state set to empty
             return new PID(agency, uri, EnumSet.noneOf(PID.State.class));
         }
     ),

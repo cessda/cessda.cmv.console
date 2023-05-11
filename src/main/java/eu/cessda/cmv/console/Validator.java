@@ -52,7 +52,6 @@ import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.util.Collections.emptyList;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
@@ -166,13 +165,8 @@ public class Validator {
 
         // Validate against XML schema if configured
         final List<SAXParseException> errors;
-        if (ddiVersion.getSchemaValidator() != null) {
-            log.debug("Validating {} against XML schema", documentPath);
-            errors = ddiVersion.getSchemaValidator().getSchemaViolations(buffer);
-        } else {
-            log.debug("XML schema validation disabled for {}", documentPath);
-            errors = emptyList();
-        }
+        log.debug("Validating {} against XML schema", documentPath);
+        errors = ddiVersion.getSchemaValidator().getSchemaViolations(buffer);
 
         // Reset the buffer
         buffer.reset();
@@ -191,7 +185,7 @@ public class Validator {
 
         // Validate against CMV profile
         final ValidationReportV0 validationReport;
-        if (validationGate != null) {
+        if (validationGate != null && profile != null) {
             log.debug("Validating {} against CMV profile {}", documentPath, profile);
             validationReport = profileValidator.validateAgainstProfile(new Resource() {
                 @Override
