@@ -141,6 +141,7 @@ public class Validator {
 
             CompletableFuture.allOf(futures).join();
         } finally {
+            // Shut down all thread pools
             executor.shutdown();
             threadPool.shutdown();
         }

@@ -55,7 +55,7 @@ class ValidatorTest {
                     URI.create("https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml"),
                     ValidationGateName.BASIC
                 );
-                resultsMap.put(validationResultsEntry.getKey(), validationResultsEntry.getValue());
+                resultsMap.put(document, validationResultsEntry);
             }
         }
 
@@ -81,7 +81,7 @@ class ValidatorTest {
                     null,
                     null
                 );
-                resultsMap.put(validationResultsEntry.getKey(), validationResultsEntry.getValue());
+                resultsMap.put(document, validationResultsEntry);
             }
         }
 
