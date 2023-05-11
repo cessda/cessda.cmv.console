@@ -71,9 +71,9 @@ public class Validator {
     private final ProfileValidator profileValidator = new ProfileValidator();
 
 
-    public Validator(Configuration configuration) {
+    public Validator(Configuration configuration, ObjectMapper objectMapper) {
         this.configuration = configuration;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     public static void main(String[] args) throws IOException, ParseException {
@@ -89,17 +89,14 @@ public class Validator {
         // Command line parser
         var commandLine = new DefaultParser().parse(options, args);
 
-        // Parse the first argument as the base path
-        Path baseDirectory;
-        if (!commandLine.getArgList().isEmpty()) {
-            baseDirectory = Path.of(commandLine.getArgList().get(0));
-        } else {
+        // Exit if the command line argument list is empty
+        if (commandLine.getArgList().isEmpty()) {
             new HelpFormatter().printHelp("validator <baseDirectory>", options, true);
-            return;
+            System.exit(1);
         }
 
-        var objectMapper = new ObjectMapper();
-        var reader = objectMapper.readerFor(Repository.class);
+        // Parse the first argument as the base path
+        var baseDirectory = Path.of(commandLine.getArgList().get(0));
 
         // Optional configuration
         Path destinationDirectory = null;
@@ -115,15 +112,20 @@ public class Validator {
         }
 
         // Instance the validator
+        var objectMapper = new ObjectMapper();
         var validator = new Validator(
-            new Configuration(baseDirectory, destinationDirectory, wrappedDirectory)
+            new Configuration(baseDirectory, destinationDirectory, wrappedDirectory),
+            objectMapper
         );
+
+        // Set the job ID from the current time
         var timestamp = OffsetDateTime.now().toString();
 
         // Create a single thread executor to run the validation from
         var executor = Executors.newSingleThreadExecutor();
 
         // Discover repositories from instances of pipeline.json
+        var reader = objectMapper.readerFor(Repository.class);
         MDC.put(MDC_KEY, timestamp);
         try (var stream = Files.find(baseDirectory, Integer.MAX_VALUE,
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
@@ -139,6 +141,7 @@ public class Validator {
                 }
             }).map(r -> CompletableFuture.runAsync(() -> validator.validateRepository(r, timestamp), executor)).toArray(CompletableFuture[]::new);
 
+            // Wait for validation completion
             CompletableFuture.allOf(futures).join();
         } finally {
             // Shut down all thread pools
