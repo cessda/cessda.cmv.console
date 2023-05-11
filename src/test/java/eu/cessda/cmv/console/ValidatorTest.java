@@ -43,7 +43,7 @@ class ValidatorTest {
 
     @Test
     void shouldValidateDocuments() throws IOException, SAXException, URISyntaxException {
-        var validator = new Validator(configuration);
+        var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
         var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
@@ -55,7 +55,7 @@ class ValidatorTest {
                     URI.create("https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml"),
                     ValidationGateName.BASIC
                 );
-                resultsMap.put(validationResultsEntry.getKey(), validationResultsEntry.getValue());
+                resultsMap.put(document, validationResultsEntry);
             }
         }
 
@@ -69,7 +69,7 @@ class ValidatorTest {
 
     @Test
     void shouldSkipCMVWhenProfileIsNotProvided() throws IOException, SAXException, URISyntaxException {
-        var validator = new Validator(configuration);
+        var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
         var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
@@ -81,7 +81,7 @@ class ValidatorTest {
                     null,
                     null
                 );
-                resultsMap.put(validationResultsEntry.getKey(), validationResultsEntry.getValue());
+                resultsMap.put(document, validationResultsEntry);
             }
         }
 
@@ -95,7 +95,7 @@ class ValidatorTest {
 
     @Test
     void shouldThrowOnInvalidXML() throws URISyntaxException {
-        var validator = new Validator(configuration);
+        var validator = new Validator(configuration, new ObjectMapper());
 
         var invalidDocument = Path.of(this.getClass().getResource("/malformed.xml").toURI());
         assertThrows(SAXException.class, () -> validator.validateDocuments(
