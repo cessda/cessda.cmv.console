@@ -21,32 +21,60 @@ import eu.cessda.cmv.core.ValidationService;
 import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
 import org.gesis.commons.resource.Resource;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ProfileValidator {
     private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
+    /**
+     * Cache for CMV profiles
+     */
     private final ConcurrentHashMap<URI, Resource> profileMap = new ConcurrentHashMap<>();
 
     /**
      * Validate the given XML document against a DDI profile.
      *
      * @param document       the document to validate
-     * @param profileURI     the profile to validate the document against
+     * @param profile        the profile to validate the document against
      * @param validationGate the validation gate to use
      * @return the validation report
      */
     public ValidationReportV0 validateAgainstProfile(Resource document, URI profile, ValidationGateName validationGate) {
         // Load and cache the DDI profile
-        var profileResource = profileMap.computeIfAbsent(profile, u -> {
-            try {
-                return Resource.newResource(u.toURL().openStream());
+        var profileResource = profileMap.computeIfAbsent(profile, CachedProfileResource::new);
+        return validationService.validate(document, profileResource, validationGate);
+    }
+
+    private static class CachedProfileResource implements Resource {
+        private final URI source;
+        private final byte[] buffer;
+
+        /**
+         * Create a new instance of a CachedProfileResource, reading the URL into a buffer.
+         *
+         * @param source the URI of the profile.
+         * @throws ProfileLoadFailedException if an IO error occurred.
+         */
+        private CachedProfileResource(URI source) {
+            this.source = source;
+            try (var inputStream = source.toURL().openStream()) {
+                this.buffer = inputStream.readAllBytes();
             } catch (IOException e) {
                 throw new ProfileLoadFailedException(e);
             }
-        });
+        }
 
-        return validationService.validate(document, profileResource, validationGate);
+        @Override
+        public URI getUri() {
+            return source;
+        }
+
+        @Override
+        public InputStream readInputStream() {
+            return new ByteArrayInputStream(buffer);
+        }
     }
 }

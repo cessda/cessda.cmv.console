@@ -19,6 +19,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
@@ -27,22 +28,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SchemaValidator {
+    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal = ThreadLocal.withInitial(() -> {
+        try {
+            // Find the resources for the XML schemas
+            var codebookResource = this.getClass().getResource("/schemas/codebook/codebook.xsd");
+            var lifecycleResource = this.getClass().getResource("/schemas/lifecycle/instance.xsd");
+            var nesstarResource = this.getClass().getResource("/schemas/nesstar/Version1-2-2.xsd");
+            var oaiResource = this.getClass().getResource("/schemas/oai-pmh/OAI-PMH.xsd");
 
-    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal;
+            // Assert schemas are not null
+            assert codebookResource != null;
+            assert lifecycleResource != null;
+            assert nesstarResource != null;
+            assert oaiResource != null;
 
-    SchemaValidator(String schemaResource) {
-        validatorThreadLocal = ThreadLocal.withInitial(() -> {
-            try {
-                var resource = SchemaValidator.class.getResource(schemaResource);
-                var schema = SchemaFactory.newDefaultInstance().newSchema(resource);
-                var validator = schema.newValidator();
-                validator.setErrorHandler(new LoggingErrorHandler());
-                return validator;
-            } catch (SAXException e) {
-                throw new IllegalStateException(e);
-            }
-        });
+            // Construct schema objects from the XML schemas
+            var schema = SchemaFactory.newDefaultInstance().newSchema(new Source[]{
+                new StreamSource(codebookResource.toExternalForm()),
+                new StreamSource(lifecycleResource.toExternalForm()),
+                new StreamSource(nesstarResource.toExternalForm()),
+                new StreamSource(oaiResource.toExternalForm())
+            });
 
+            // Create a validator and set its error handler
+            var validator = schema.newValidator();
+            validator.setErrorHandler(new LoggingErrorHandler());
+            return validator;
+        } catch (SAXException e) {
+            throw new IllegalStateException(e);
+        }
+    });
+
+    SchemaValidator() {
         // Validate parameters now rather than when a validation is run
         validatorThreadLocal.get();
     }
