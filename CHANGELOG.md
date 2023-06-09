@@ -14,7 +14,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
-# [3.2.1] - 2023-03-28
+## [3.3.0] - 2023-06-13
+
+### Added
+
+- Added tests for DDI 3.2 persistent identifiers ([#391](https://github.com/cessda/cessda.cdc.versions/issues/391))
+- Added a general end-to-end test running the validator from the command
+  line ([PR-6](https://github.com/cessda/cessda.cmv.console/pull/6))
+
+### Changed
+
+- Disabled enforcing XML Schema validation ([#545](https://github.com/cessda/cessda.cdc.versions/issues/545))
+- Changed the report output so that each validated file only outputs one
+  entry ([PR-12](https://github.com/cessda/cessda.cmv.console/pull/12))
+
+## [3.2.1] - 2023-03-28
 
 ### Fixes
 
@@ -103,6 +117,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Wait 5 seconds on startup. [#303](https://github.com/cessda/cessda.cdc.versions/issues/303)
 - Log each record separately.
 - Remove CMV profile.
+
+[3.3.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.3.0
 
 [3.2.1]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.2.1
 [3.1.1]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.1.1
