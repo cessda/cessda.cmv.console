@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [3.3.0] - 2023-06-13
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8021255.svg)](https://doi.org/10.5281/zenodo.8021255)
+
 ### Added
 
 - Added tests for DDI 3.2 persistent identifiers ([#391](https://github.com/cessda/cessda.cdc.versions/issues/391))
