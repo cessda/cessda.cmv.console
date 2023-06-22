@@ -38,7 +38,7 @@ class ValidatorTest {
     private final Configuration configuration;
 
     ValidatorTest() {
-        configuration = new Configuration(Path.of("input"), null, null);
+        configuration = new Configuration(Path.of("input"), null);
     }
 
     @Test

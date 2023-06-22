@@ -19,7 +19,6 @@ import java.nio.file.Path;
 
 public record Configuration(
     Path rootDirectory,
-    Path destinationDirectory,
-    Path wrappedDirectory
+    Path destinationDirectory
 ) {
 }

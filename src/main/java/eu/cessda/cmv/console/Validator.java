@@ -80,11 +80,9 @@ public class Validator {
 
         // Command line options
         var destinationOption = new Option("d", "destination", true, "The destination directory to store validated records");
-        var wrappedOption = new Option("w", "wrapped", true, "Directory where wrapped records are stored");
 
         var options = new Options();
         options.addOption(destinationOption);
-        options.addOption(wrappedOption);
 
         // Command line parser
         var commandLine = new DefaultParser().parse(options, args);
@@ -100,21 +98,18 @@ public class Validator {
 
         // Optional configuration
         Path destinationDirectory = null;
-        Path wrappedDirectory = null;
 
         // Iterate through options and extract paths
         for (var option : (Iterable<Option>) commandLine::iterator) {
             if (destinationOption.equals(option)) {
                 destinationDirectory = Path.of(option.getValue());
-            } else if (wrappedOption.equals(option)) {
-                wrappedDirectory = Path.of(option.getValue());
             }
         }
 
         // Instance the validator
         var objectMapper = new ObjectMapper();
         var validator = new Validator(
-            new Configuration(baseDirectory, destinationDirectory, wrappedDirectory),
+            new Configuration(baseDirectory, destinationDirectory),
             objectMapper
         );
 
@@ -387,19 +382,13 @@ public class Validator {
         // Convert the absolute path into a relative path from the root XML directory.
         var relativePath = configuration.rootDirectory().relativize(validationPath);
 
-        // If an unwrapped source directory is configured use that, otherwise use the given path.
-        Path sourcePath;
-        if (configuration.wrappedDirectory() != null) {
-            sourcePath = configuration.wrappedDirectory().resolve(relativePath);
-        } else {
-            sourcePath = validationPath;
-        }
-
+        // Use the relative path to construct the destination path
         var destinationPath = configuration.destinationDirectory().resolve(relativePath).normalize();
+
         try {
             // Create all required directories and copy the file
             Files.createDirectories(destinationPath.getParent());
-            return Optional.of(Files.copy(sourcePath, destinationPath, REPLACE_EXISTING));
+            return Optional.of(Files.copy(validationPath, destinationPath, REPLACE_EXISTING));
         } catch (IOException e) {
             log.error("Error when copying {} to destination directory: {}", validationPath, e.toString());
             return Optional.empty();
