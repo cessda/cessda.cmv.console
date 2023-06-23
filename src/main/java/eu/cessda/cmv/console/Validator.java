@@ -244,14 +244,10 @@ public class Validator {
                     return validateFile(repo, file, profile, invalidRecordsCounter);
                 },
                 threadPool
-            ).thenApplyAsync(optionalPath -> optionalPath.flatMap(path -> {
+            ).thenApplyAsync(optionalPath ->
                 // If the destination directory is configured, copy the result
-                if (configuration.destinationDirectory() != null) {
-                    return copyToDestination(path);
-                } else {
-                    return Optional.empty();
-                }
-            }))).toList();
+                optionalPath.filter(p -> configuration.destinationDirectory() != null).map(this::copyToDestination)
+            )).toList();
 
             if (configuration.destinationDirectory() != null) {
                 // Get a HashSet of copied files
@@ -370,15 +366,12 @@ public class Validator {
 
     /**
      * Copy the validated record to the configured destination directory.
-     * <p>
-     * If a wrapped directory is configured, the wrapped record will be copied to the destination
-     * directory, otherwise the source file used will be copied. The folder structure of the source
-     * directory is kept.
+     * The folder structure of the source directory is kept.
      *
      * @param validationPath the validated record to copy.
-     * @return the destination path, or an empty {@link Optional} if the copying failed.
+     * @return the destination path, or {@code null} if the copying failed.
      */
-    private Optional<Path> copyToDestination(Path validationPath) {
+    private Path copyToDestination(Path validationPath) {
         // Convert the absolute path into a relative path from the root XML directory.
         var relativePath = configuration.rootDirectory().relativize(validationPath);
 
@@ -388,10 +381,10 @@ public class Validator {
         try {
             // Create all required directories and copy the file
             Files.createDirectories(destinationPath.getParent());
-            return Optional.of(Files.copy(validationPath, destinationPath, REPLACE_EXISTING));
+            return Files.copy(validationPath, destinationPath, REPLACE_EXISTING);
         } catch (IOException e) {
             log.error("Error when copying {} to destination directory: {}", validationPath, e.toString());
-            return Optional.empty();
+            return null;
         }
     }
 
