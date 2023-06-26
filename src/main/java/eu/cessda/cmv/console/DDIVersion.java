@@ -33,7 +33,6 @@ enum DDIVersion {
             Map.entry("r", "ddi:reusable:3_2")
         )),
         "//r:Citation/r:InternationalIdentifier",
-        new SchemaValidator("/schemas/lifecycle/instance.xsd"),
         node -> {
             String agency = null;
             String uri = null;
@@ -58,25 +57,21 @@ enum DDIVersion {
     DDI_2_5(
         buildContext(Map.of("ddi", "ddi:codebook:2_5")),
         "//ddi:codeBook//ddi:stdyDscr/ddi:citation/ddi:titlStmt/ddi:IDNo",
-        new SchemaValidator("/schemas/codebook/codebook.xsd"),
         DDIVersion::getDDI25PID
     ),
     NESSTAR(
         buildContext(Map.of("ddi", "http://www.icpsr.umich.edu/DDI")),
         "//ddi:codeBook/stdyDscr/citation/titlStmt/IDNo",
-        new SchemaValidator("/schemas/nesstar/Version1-2-2.xsd"),
         DDIVersion::getDDI25PID
     );
 
     private final NamespaceContext namespaceContext;
     private final String pidXPath;
-    private final SchemaValidator schemaValidator;
     private final Function<Node, PID> getPid;
 
-    DDIVersion(NamespaceContext namespaceContext, String pidXPath, SchemaValidator schemaValidator, Function<Node, PID> getPid) {
+    DDIVersion(NamespaceContext namespaceContext, String pidXPath, Function<Node, PID> getPid) {
         this.namespaceContext = namespaceContext;
         this.pidXPath = pidXPath;
-        this.schemaValidator = schemaValidator;
         this.getPid = getPid;
     }
 
@@ -116,10 +111,6 @@ enum DDIVersion {
 
     public String getXPath() {
         return pidXPath;
-    }
-
-    public SchemaValidator getSchemaValidator() {
-        return schemaValidator;
     }
 
     /**

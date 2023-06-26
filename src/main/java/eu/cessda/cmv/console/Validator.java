@@ -69,6 +69,7 @@ public class Validator {
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
     private final ProfileValidator profileValidator = new ProfileValidator();
+    private final SchemaValidator schemaValidator = new SchemaValidator();
 
 
     public Validator(Configuration configuration, ObjectMapper objectMapper) {
@@ -170,7 +171,7 @@ public class Validator {
         // Validate against XML schema if configured
         final List<SAXParseException> errors;
         log.debug("Validating {} against XML schema", documentPath);
-        errors = ddiVersion.getSchemaValidator().getSchemaViolations(buffer);
+        errors = schemaValidator.getSchemaViolations(buffer);
 
         // Reset the buffer
         buffer.reset();

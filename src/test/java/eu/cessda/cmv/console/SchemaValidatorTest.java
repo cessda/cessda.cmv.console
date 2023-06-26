@@ -29,7 +29,7 @@ class SchemaValidatorTest {
         // Load a valid DDI document.
         var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
 
-        var schemaViolations = DDIVersion.DDI_2_5.getSchemaValidator().getSchemaViolations(validDDIDocument);
+        var schemaViolations = new SchemaValidator().getSchemaViolations(validDDIDocument);
 
         // There should be no schema violations.
         assertTrue(schemaViolations.isEmpty());
@@ -40,7 +40,7 @@ class SchemaValidatorTest {
         // Load an invalid DDI document.
         var invalidDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/invalid.xml");
 
-        var schemaViolations = DDIVersion.DDI_2_5.getSchemaValidator().getSchemaViolations(invalidDDIDocument);
+        var schemaViolations = new SchemaValidator().getSchemaViolations(invalidDDIDocument);
 
         // There should be 5 schema violations.
         assertEquals(5, schemaViolations.size());
@@ -51,7 +51,7 @@ class SchemaValidatorTest {
         // Load a NESSTAR DDI document.
         var nesstarDocument = this.getClass().getResourceAsStream("/nesstar/NSD1367.xml");
 
-        var schemaViolations = DDIVersion.NESSTAR.getSchemaValidator().getSchemaViolations(nesstarDocument);
+        var schemaViolations = new SchemaValidator().getSchemaViolations(nesstarDocument);
 
         // There should be 2 schema violations
         assertEquals(2, schemaViolations.size());
@@ -62,6 +62,6 @@ class SchemaValidatorTest {
         var emptyStream = InputStream.nullInputStream();
 
         // Attempting to parse an empty stream should throw an exception.
-        assertThrows(SAXException.class, () -> DDIVersion.DDI_2_5.getSchemaValidator().getSchemaViolations(emptyStream));
+        assertThrows(SAXException.class, () -> new SchemaValidator().getSchemaViolations(emptyStream));
     }
 }
