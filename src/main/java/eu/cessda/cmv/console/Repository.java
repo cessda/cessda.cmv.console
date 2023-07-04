@@ -31,6 +31,7 @@ import java.net.URI;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Repository(
     String code,
+    URI url,
     DDIVersion ddiVersion,
     URI profile,
     ValidationGateName validationGate

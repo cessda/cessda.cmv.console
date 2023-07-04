@@ -121,6 +121,7 @@ class ValidatorTest {
         // Write repository configuration
         var repositoryConfiguration = new Repository(
             "test",
+            URI.create("http://test/oai"),
             DDIVersion.DDI_2_5,
             this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(),
             ValidationGateName.BASIC
