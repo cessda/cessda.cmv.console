@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProfileValidatorTest {
-    ProfileValidator profileValidator = new ProfileValidator();
+    private final ProfileValidator profileValidator = new ProfileValidator();
 
     @Test
     void shouldValidateDocument() throws URISyntaxException {
@@ -48,9 +48,10 @@ class ProfileValidatorTest {
 
         // Empty input stream, should not be consumed.
         var nullInputStream = InputStream.nullInputStream();
+        var nullResource = Resource.newResource(nullInputStream);
 
         assertThrows(ProfileLoadFailedException.class, () ->
-            profileValidator.validateAgainstProfile(Resource.newResource(nullInputStream), uri, ValidationGateName.BASIC)
+            profileValidator.validateAgainstProfile(nullResource, uri, ValidationGateName.BASIC)
         );
     }
 }

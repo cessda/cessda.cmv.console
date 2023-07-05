@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.cessda.cmv.core.ValidationGateName;
 import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
 import org.apache.commons.cli.*;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
@@ -34,17 +35,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -56,7 +54,6 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
-// TODO - If validation is not configured, don't forward records to the validated bucket.
 public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
@@ -64,7 +61,7 @@ public class Validator {
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
     private static final ValidationReportV0 EMPTY_VALIDATION_REPORT = new ValidationReportV0();
-    private static final ExecutorService threadPool = Executors.newWorkStealingPool();
+    private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
@@ -121,28 +118,28 @@ public class Validator {
         var executor = Executors.newSingleThreadExecutor();
 
         // Discover repositories from instances of pipeline.json
-        var reader = objectMapper.readerFor(Repository.class);
         MDC.put(MDC_KEY, timestamp);
         try (var stream = Files.find(baseDirectory, Integer.MAX_VALUE,
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
                 && path.getFileName().equals(Path.of("pipeline.json"))
         )) {
-            var futures = stream.flatMap(f -> {
-                try (var inputStream = Files.newInputStream(f)) {
-                    Repository r = reader.readValue(inputStream);
-                    return Stream.of(Map.entry(f.getParent(), r));
+            var futures = stream.flatMap(pipelineConfigurationPath -> {
+                try (var inputStream = Files.newInputStream(pipelineConfigurationPath)) {
+                    var repository = objectMapper.readValue(inputStream, Repository.class);
+                    return Stream.of(Map.entry(pipelineConfigurationPath.getParent(), repository));
                 } catch (IOException e) {
-                    log.error("Couldn't load pipeline configuration at {}: {}", f, e.toString());
+                    log.error("Couldn't load pipeline configuration at {}: {}", pipelineConfigurationPath, e.toString());
                     return Stream.empty();
                 }
-            }).map(r -> CompletableFuture.runAsync(() -> validator.validateRepository(r, timestamp), executor)).toArray(CompletableFuture[]::new);
+            }).map(r -> CompletableFuture.runAsync(
+                () -> validator.validateRepository(r.getKey(), r.getValue(), timestamp), executor)
+            ).toArray(CompletableFuture[]::new);
 
             // Wait for validation completion
             CompletableFuture.allOf(futures).join();
         } finally {
             // Shut down all thread pools
             executor.shutdown();
-            threadPool.shutdown();
         }
     }
 
@@ -216,14 +213,13 @@ public class Validator {
      * Validate all configured repositories.
      */
     @SuppressWarnings("java:S2629")
-    private void validateRepository(Map.Entry<Path, Repository> repoMap, String timestamp) {
+    private void validateRepository(Path repoPath, Repository repo, String timestamp) {
         configureMDC(timestamp);
 
-        var repo = repoMap.getValue();
         log.info("{}: Performing validation.", repo.code());
 
         // Create a stream of all XML files in the repository directory
-        try (var sourceFilesStream = Files.find(repoMap.getKey(), 1,
+        try (var sourceFilesStream = Files.find(repoPath, 1,
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
                 && FilenameUtils.isExtension(path.getFileName().toString(), "xml"))
         ) {
@@ -242,24 +238,25 @@ public class Validator {
                     recordCounter.incrementAndGet();
 
                     // Validate the file
-                    return validateFile(repo, file, profile, invalidRecordsCounter);
-                },
-                threadPool
-            ).thenApplyAsync(optionalPath ->
-                // If the destination directory is configured, copy the result
-                optionalPath.filter(p -> configuration.destinationDirectory() != null).map(this::copyToDestination)
+                    var valid =  validateFile(repo, file, profile, invalidRecordsCounter);
+                    if (valid && configuration.destinationDirectory() != null) {
+                        return copyToDestination(file);
+                    } else {
+                        return null;
+                    }
+                }
             )).toList();
 
             if (configuration.destinationDirectory() != null) {
                 // Get a HashSet of copied files
                 var copiedFiles = futures.stream()
                     .map(CompletableFuture::join)
-                    .flatMap(Optional::stream)
+                    .filter(Objects::nonNull)
                     .map(Path::getFileName)
                     .collect(Collectors.toCollection(HashSet::new));
 
                 // Clean up files in the destination directory.
-                deleteOrphanedRecords(repoMap.getValue(), repoMap.getKey(), copiedFiles);
+                deleteOrphanedRecords(repo, repoPath, copiedFiles);
             } else {
                 // Join all the futures and wait for their completion
                 futures.forEach(CompletableFuture::join);
@@ -283,9 +280,9 @@ public class Validator {
      * @param file                  the file to validate.
      * @param profile               the profile to validate against.
      * @param invalidRecordsCounter the invalid records counter, this is incremented if the file is invalid.
-     * @return a path if the file was copied, or an empty optional.
+     * @return true if the file was valid, false if validation failed
      */
-    private Optional<Path> validateFile(Repository repo, Path file, URI profile, AtomicInteger invalidRecordsCounter) {
+    private boolean validateFile(Repository repo, Path file, URI profile, AtomicInteger invalidRecordsCounter) {
         try {
 
             var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
@@ -301,7 +298,7 @@ public class Validator {
 
             // Only constraint violations block copying
             if (report.report().getConstraintViolations().isEmpty()) {
-                return Optional.of(file);
+                return true;
             } else {
                 invalidRecordsCounter.incrementAndGet();
             }
@@ -311,7 +308,7 @@ public class Validator {
         }
 
         // Either invalid, or an error occurred
-        return Optional.empty();
+        return false;
     }
 
 
@@ -325,6 +322,15 @@ public class Validator {
      */
     private void reportViolations(Repository repo, URI profile, String recordIdentifier, ValidationResults report) {
         try {
+            String cdcIdentifier;
+
+            if (repo.url() != null) {
+                var cdcIdentifierString = repo.url() + "-" + recordIdentifier;
+                cdcIdentifier = DigestUtils.sha256Hex(cdcIdentifierString.getBytes(UTF_8));
+            } else {
+                cdcIdentifier = null;
+            }
+
             var validPids = report.pidValidationResult().valid();
 
             String pidJson = null;
@@ -348,7 +354,7 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}.",
+            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
                 value("oai_record", recordIdentifier),
                 schemaViolations.size(),
@@ -358,7 +364,8 @@ public class Validator {
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, ""),
-                keyValue("pid_report", pidJson, "")
+                keyValue("pid_report", pidJson, ""),
+                keyValue("cdc_identifier", cdcIdentifier, "")
             );
         } catch (JsonProcessingException | OutOfMemoryError e) {
             log.error("{}: Failed to write violation reports for {}.", repo.code(), recordIdentifier, e);
@@ -373,11 +380,7 @@ public class Validator {
      * @return the destination path, or {@code null} if the copying failed.
      */
     private Path copyToDestination(Path validationPath) {
-        // Convert the absolute path into a relative path from the root XML directory.
-        var relativePath = configuration.rootDirectory().relativize(validationPath);
-
-        // Use the relative path to construct the destination path
-        var destinationPath = configuration.destinationDirectory().resolve(relativePath).normalize();
+        Path destinationPath = getDestinationPath(validationPath);
 
         try {
             // Create all required directories and copy the file
@@ -397,11 +400,24 @@ public class Validator {
      */
     @SuppressWarnings("java:S2629")
     private void deleteOrphanedRecords(Repository repository, Path repositoryPath, HashSet<Path> records) {
-        // Convert the absolute path into a relative path from the root XML directory, then map the destination path.
-        var relativePath = configuration.rootDirectory().relativize(repositoryPath);
-        var destinationPath = configuration.destinationDirectory().resolve(relativePath);
+        // Derive the destination path of this repository from the repository source path
+        Path destinationPath = getDestinationPath(repositoryPath);
+
         int filesDeleted = 0;
-        try (var directoryStream = Files.newDirectoryStream(destinationPath, "*.xml")) {
+
+        DirectoryStream<Path> directoryStream;
+        try {
+            directoryStream = Files.newDirectoryStream(destinationPath, "*.xml");
+        } catch (NoSuchFileException e) {
+            // Handle the case where the directory cannot be found separately from when individual files cannot be found
+            log.debug("{}: Destination directory \"{}\" not found", repository.code(), destinationPath);
+            return;
+        } catch (IOException e) {
+            log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), destinationPath, e.toString());
+            return;
+        }
+
+        try (directoryStream) {
             for (var file : directoryStream) {
                 if (!records.contains(file.getFileName())) {
                     // Delete the records.
@@ -411,12 +427,30 @@ public class Validator {
                 }
             }
         } catch (DirectoryIteratorException | IOException e) {
-            log.warn("{}: Couldn't clean up: {}", repository.code(), e.toString());
+            log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), destinationPath, e.toString());
         }
 
         // Log if files are deleted at INFO level, always log at debug
-        if (log.isDebugEnabled() || filesDeleted > 0) {
-            log.info("{}: {} orphaned records deleted", repository.code(), filesDeleted);
+        if (log.isDebugEnabled()) {
+            log.debug(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
+        } else if (filesDeleted > 0) {
+            log.info(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
         }
+    }
+
+    /**
+     * Get a {@link Path} that is mapped to the destination directory.
+     * The original path must be relative to the root directory.
+     *
+     * @param repositoryPath the path to map, normalised using {@link Path#normalize()}.
+     * @return the destination path.
+     * @throws IllegalArgumentException if the path cannot be relativized against the root directory.
+     */
+    private Path getDestinationPath(Path repositoryPath) {
+        // Convert the absolute path into a relative path from the root XML directory.
+        var relativePath = configuration.rootDirectory().relativize(repositoryPath);
+
+        // Use the relative path to construct the destination path
+        return configuration.destinationDirectory().resolve(relativePath).normalize();
     }
 }
