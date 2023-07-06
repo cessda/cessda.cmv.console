@@ -15,12 +15,17 @@
  */
 package eu.cessda.cmv.console;
 
+import org.w3c.dom.Document;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,60 +33,71 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SchemaValidator {
-    private final ThreadLocal<javax.xml.validation.Validator> validatorThreadLocal = ThreadLocal.withInitial(() -> {
-        try {
-            // Find the resources for the XML schemas
-            var codebookResource = this.getClass().getResource("/schemas/codebook/codebook.xsd");
-            var lifecycleResource = this.getClass().getResource("/schemas/lifecycle/instance.xsd");
-            var nesstarResource = this.getClass().getResource("/schemas/nesstar/Version1-2-2.xsd");
-            var oaiResource = this.getClass().getResource("/schemas/oai-pmh/OAI-PMH.xsd");
+    private final Schema schema;
+    private final ThreadLocal<DocumentBuilderHandler> documentBuilderThreadLocal;
 
-            // Assert schemas are not null
-            assert codebookResource != null;
-            assert lifecycleResource != null;
-            assert nesstarResource != null;
-            assert oaiResource != null;
+    SchemaValidator() throws SAXException {
+        // Find the resources for the XML schemas
+        var codebookResource = this.getClass().getResource("/schemas/codebook/codebook.xsd");
+        var lifecycleResource = this.getClass().getResource("/schemas/lifecycle/instance.xsd");
+        var nesstarResource = this.getClass().getResource("/schemas/nesstar/Version1-2-2.xsd");
+        var oaiResource = this.getClass().getResource("/schemas/oai-pmh/OAI-PMH.xsd");
 
-            // Construct schema objects from the XML schemas
-            var schema = SchemaFactory.newDefaultInstance().newSchema(new Source[]{
-                new StreamSource(codebookResource.toExternalForm()),
-                new StreamSource(lifecycleResource.toExternalForm()),
-                new StreamSource(nesstarResource.toExternalForm()),
-                new StreamSource(oaiResource.toExternalForm())
-            });
+        // Assert schemas are not null
+        assert codebookResource != null;
+        assert lifecycleResource != null;
+        assert nesstarResource != null;
+        assert oaiResource != null;
 
-            // Create a validator and set its error handler
-            var validator = schema.newValidator();
-            validator.setErrorHandler(new LoggingErrorHandler());
-            return validator;
-        } catch (SAXException e) {
-            throw new IllegalStateException(e);
-        }
-    });
+        // Construct schema objects from the XML schemas
+        schema = SchemaFactory.newDefaultInstance().newSchema(new Source[]{
+            new StreamSource(codebookResource.toExternalForm()),
+            new StreamSource(lifecycleResource.toExternalForm()),
+            new StreamSource(nesstarResource.toExternalForm()),
+            new StreamSource(oaiResource.toExternalForm())
+        });
 
-    SchemaValidator() {
+        documentBuilderThreadLocal = ThreadLocal.withInitial(() -> {
+            try {
+                // Create a document builder and set the schema
+                var documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                documentBuilderFactory.setNamespaceAware(true);
+                documentBuilderFactory.setSchema(schema);
+
+                var documentBuilder = documentBuilderFactory.newDocumentBuilder();
+
+                // Configure the error handler
+                var errorHandler = new LoggingErrorHandler();
+                documentBuilder.setErrorHandler(errorHandler);
+
+                return new DocumentBuilderHandler(documentBuilder, errorHandler);
+            } catch (ParserConfigurationException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+
         // Validate parameters now rather than when a validation is run
-        validatorThreadLocal.get();
+        documentBuilderThreadLocal.get();
     }
 
     /**
      * Validate the given XML document against the schema, reporting any schema violations found.
      *
      * @param inputStream the document to validate.
-     * @return the list of validation errors encountered.
+     * @return a record containing the parsed document and the list of validation errors encountered.
      * @throws SAXException if a parsing error occurs when validating the document.
      * @throws IOException  if an IO error occurs when validating the document.
      */
-    public List<SAXParseException> getSchemaViolations(InputStream inputStream) throws SAXException, IOException {
-        var validator = validatorThreadLocal.get();
-        validator.validate(new StreamSource(inputStream));
+    public SchemaValidatorResult getSchemaViolations(InputStream inputStream) throws SAXException, IOException {
+        var documentBuilder = documentBuilderThreadLocal.get();
+        var document = documentBuilder.builder().parse(inputStream);
 
         // Extract errors from the error handler, then reset the validator
-        var errorHandler = (LoggingErrorHandler) validator.getErrorHandler();
+        var errorHandler = documentBuilder.errorHandler();
         var errors = errorHandler.getErrors();
         errorHandler.reset();
 
-        return errors;
+        return new SchemaValidatorResult(document, errors);
     }
 
     /**
@@ -122,5 +138,17 @@ public class SchemaValidator {
         public List<SAXParseException> getErrors() {
             return List.copyOf(errors);
         }
+    }
+
+    record DocumentBuilderHandler(
+        DocumentBuilder builder,
+        LoggingErrorHandler errorHandler
+    ) {
+    }
+
+    record SchemaValidatorResult(
+        Document document,
+        List<SAXParseException> schemaViolations
+    ) {
     }
 }

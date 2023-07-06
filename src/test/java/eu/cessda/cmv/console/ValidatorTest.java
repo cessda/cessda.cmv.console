@@ -94,7 +94,7 @@ class ValidatorTest {
     }
 
     @Test
-    void shouldThrowOnInvalidXML() throws URISyntaxException {
+    void shouldThrowOnInvalidXML() throws URISyntaxException, SAXException {
         var validator = new Validator(configuration, new ObjectMapper());
 
         var invalidDocument = Path.of(this.getClass().getResource("/malformed.xml").toURI());
