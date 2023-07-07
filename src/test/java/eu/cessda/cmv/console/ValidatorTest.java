@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +47,7 @@ class ValidatorTest {
         var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
-        var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
+        var ddi25Documents = Path.of(Objects.requireNonNull(this.getClass().getResource("/ddi_2_5")).toURI());
         try (var directoryStream = Files.newDirectoryStream(ddi25Documents)) {
             for (var document : directoryStream) {
                 var validationResultsEntry = validator.validateDocuments(
@@ -60,7 +61,7 @@ class ValidatorTest {
         }
 
         // Assert that the correct amount of documents were validated.
-        assertEquals(3, resultsMap.size());
+        assertEquals(4, resultsMap.size());
 
         // Assert that there is one result with either constraint or schema validation errors.
         assertThat(resultsMap.values()).map(ValidationResults::schemaViolations).anyMatch(schemaViolations -> !schemaViolations.isEmpty());
@@ -72,7 +73,7 @@ class ValidatorTest {
         var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
-        var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
+        var ddi25Documents = Path.of(Objects.requireNonNull(this.getClass().getResource("/ddi_2_5")).toURI());
         try (var directoryStream = Files.newDirectoryStream(ddi25Documents)) {
             for (var document : directoryStream) {
                 var validationResultsEntry = validator.validateDocuments(
@@ -86,7 +87,7 @@ class ValidatorTest {
         }
 
         // Assert that the correct amount of documents were validated.
-        assertEquals(3, resultsMap.size());
+        assertEquals(4, resultsMap.size());
 
         // Assert that only schema violations are present
         assertThat(resultsMap.values()).map(ValidationResults::schemaViolations).anyMatch(schemaViolations -> !schemaViolations.isEmpty());
@@ -97,7 +98,7 @@ class ValidatorTest {
     void shouldThrowOnInvalidXML() throws URISyntaxException, SAXException {
         var validator = new Validator(configuration, new ObjectMapper());
 
-        var invalidDocument = Path.of(this.getClass().getResource("/malformed.xml").toURI());
+        var invalidDocument = Path.of(Objects.requireNonNull(this.getClass().getResource("/malformed.xml")).toURI());
         assertThrows(SAXException.class, () -> validator.validateDocuments(
             invalidDocument,
             DDIVersion.DDI_2_5,
@@ -109,7 +110,7 @@ class ValidatorTest {
     @Test
     void shouldCopyValidatedRecords(@TempDir Path source, @TempDir Path destination) throws URISyntaxException, IOException {
         // Discover test documents and copy them
-        var ddi25Documents = Path.of(this.getClass().getResource("/ddi_2_5").toURI());
+        var ddi25Documents = Path.of(Objects.requireNonNull(this.getClass().getResource("/ddi_2_5")).toURI());
         try (var fileList = Files.newDirectoryStream(ddi25Documents)) {
             for (var document : fileList) {
                 Files.copy(document, source.resolve(document.getFileName()));
@@ -123,7 +124,7 @@ class ValidatorTest {
             "test",
             URI.create("http://test/oai"),
             DDIVersion.DDI_2_5,
-            this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(),
+            Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
             ValidationGateName.BASIC
         );
         new ObjectMapper().writeValue(source.resolve("pipeline.json").toFile(), repositoryConfiguration);
