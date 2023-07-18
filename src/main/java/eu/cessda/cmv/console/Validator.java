@@ -26,6 +26,8 @@ import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -34,11 +36,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -62,6 +64,7 @@ public class Validator {
     private static final String REPO_NAME = "repo_name";
     private static final ValidationReportV0 EMPTY_VALIDATION_REPORT = new ValidationReportV0();
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
+    private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
@@ -69,12 +72,12 @@ public class Validator {
     private final SchemaValidator schemaValidator = new SchemaValidator();
 
 
-    public Validator(Configuration configuration, ObjectMapper objectMapper) {
+    public Validator(Configuration configuration, ObjectMapper objectMapper) throws SAXException {
         this.configuration = configuration;
         this.objectMapper = objectMapper;
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException, SAXException {
 
         // Command line options
         var destinationOption = new Option("d", "destination", true, "The destination directory to store validated records");
@@ -161,9 +164,12 @@ public class Validator {
         var buffer = new ByteArrayInputStream(Files.readAllBytes(documentPath));
 
         // Validate against XML schema if configured
-        final List<SAXParseException> errors;
         log.debug("Validating {} against XML schema", documentPath);
-        errors = schemaValidator.getSchemaViolations(buffer);
+        var schemaValidatorResult = schemaValidator.getSchemaViolations(buffer);
+
+        // Extract the request URL from the document
+        var requestURL = extractURL(schemaValidatorResult.document());
+
 
         // Reset the buffer
         buffer.reset();
@@ -200,7 +206,29 @@ public class Validator {
             validationReport = EMPTY_VALIDATION_REPORT;
         }
 
-        return new ValidationResults(errors, pidValidationResult, validationReport);
+        return new ValidationResults(
+            requestURL,
+            schemaValidatorResult.schemaViolations(),
+            pidValidationResult,
+            validationReport
+        );
+    }
+
+    static URI extractURL(Document document) {
+        // Only attempt extraction if the document element namespace is an OAI-PMH response
+        if (OAI_NAMESPACE_URI.equals(document.getDocumentElement().getNamespaceURI())) {
+            var requestElements = document.getDocumentElement().getElementsByTagNameNS(OAI_NAMESPACE_URI, "request");
+            if (requestElements.getLength() > 0) {
+                var requestElement = (Element) requestElements.item(0);
+                try {
+                    return new URI(requestElement.getTextContent().trim());
+                } catch (URISyntaxException e) {
+                    // ignore
+                }
+            }
+        }
+
+        return null;
     }
 
     private static void configureMDC(String timestamp) {
@@ -324,8 +352,13 @@ public class Validator {
         try {
             String cdcIdentifier;
 
-            if (repo.url() != null) {
-                var cdcIdentifierString = repo.url() + "-" + recordIdentifier;
+            var repoURL = report.repoURL();
+            if (repoURL == null) {
+                repoURL = repo.url();
+            }
+
+            if (repoURL != null) {
+                var cdcIdentifierString = repoURL + "-" + recordIdentifier;
                 cdcIdentifier = DigestUtils.sha256Hex(cdcIdentifierString.getBytes(UTF_8));
             } else {
                 cdcIdentifier = null;

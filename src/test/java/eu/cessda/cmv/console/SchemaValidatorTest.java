@@ -20,6 +20,7 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,10 +30,25 @@ class SchemaValidatorTest {
         // Load a valid DDI document.
         var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
 
-        var schemaViolations = new SchemaValidator().getSchemaViolations(validDDIDocument);
+        var result = new SchemaValidator().getSchemaViolations(validDDIDocument);
 
         // There should be no schema violations.
-        assertTrue(schemaViolations.isEmpty());
+        assertNotNull(result.document());
+        assertNull(Validator.extractURL(result.document()));
+        assertTrue(result.schemaViolations().isEmpty());
+    }
+
+    @Test
+    void shouldValidateOAIDocument() throws IOException, SAXException {
+        // Load a valid DDI document.
+        var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/valid_oai.xml");
+
+        var result = new SchemaValidator().getSchemaViolations(validDDIDocument);
+
+        // There should be no schema violations.
+        assertNotNull(result.document());
+        assertEquals(URI.create("https://oai.ukdataservice.ac.uk:8443/oai/provider"), Validator.extractURL(result.document()));
+        assertTrue(result.schemaViolations().isEmpty());
     }
 
     @Test
@@ -40,10 +56,11 @@ class SchemaValidatorTest {
         // Load an invalid DDI document.
         var invalidDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/invalid.xml");
 
-        var schemaViolations = new SchemaValidator().getSchemaViolations(invalidDDIDocument);
+        var result = new SchemaValidator().getSchemaViolations(invalidDDIDocument);
 
         // There should be 5 schema violations.
-        assertEquals(5, schemaViolations.size());
+        assertNotNull(result.document());
+        assertEquals(5, result.schemaViolations().size());
     }
 
     @Test
@@ -51,10 +68,11 @@ class SchemaValidatorTest {
         // Load a NESSTAR DDI document.
         var nesstarDocument = this.getClass().getResourceAsStream("/nesstar/NSD1367.xml");
 
-        var schemaViolations = new SchemaValidator().getSchemaViolations(nesstarDocument);
+        var result = new SchemaValidator().getSchemaViolations(nesstarDocument);
 
         // There should be 2 schema violations
-        assertEquals(2, schemaViolations.size());
+        assertNotNull(result.document());
+        assertEquals(2, result.schemaViolations().size());
     }
 
     @Test
