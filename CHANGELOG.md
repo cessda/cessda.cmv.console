@@ -14,6 +14,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [3.4.0] - 2023-08-29
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8277085.svg)](https://doi.org/10.5281/zenodo.8277085)
+
+### Added
+
+- Add the CDC identifier to the output ([#514](https://github.com/cessda/cessda.cdc.versions/issues/514))
+
+### Changed
+
+- Use a single instance of SchemaValidator with all schemas configured rather than a specific instance for each DDIVersion ([PR-20](https://github.com/cessda/cessda.cmv.console/pull/20))
+
+### Removed
+
+- Removed the ability to copy a separate set of records when validation passes ([#565](https://github.com/cessda/cessda.cdc.versions/issues/565))
+
 ## [3.3.0] - 2023-06-13
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8021255.svg)](https://doi.org/10.5281/zenodo.8021255)
