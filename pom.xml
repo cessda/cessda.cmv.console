@@ -21,7 +21,7 @@
 
     <groupId>eu.cessda.cdc</groupId>
     <artifactId>validator</artifactId>
-    <version>3.4.0-SNAPSHOT</version>
+    <version>3.4.0</version>
     <name>CESSDA Data Catalogue: Validator</name>
     <url>https://datacatalogue.cessda.eu/</url>
     <inceptionYear>2021</inceptionYear>
@@ -34,7 +34,7 @@
     <scm>
         <connection>scm:git:https://github.com/cessda/cessda.cdc.validator.git</connection>
         <url>https://github.com/cessda/cessda.cdc.validator</url>
-      <tag>3.2.1</tag>
+      <tag>3.4.0</tag>
   </scm>
 
     <issueManagement>
