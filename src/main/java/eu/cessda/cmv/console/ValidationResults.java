@@ -15,7 +15,7 @@
  */
 package eu.cessda.cmv.console;
 
-import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
+import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.xml.sax.SAXParseException;
 
 import java.net.URI;
@@ -25,5 +25,5 @@ record ValidationResults(
     URI repoURL,
     List<SAXParseException> schemaViolations,
     PIDValidationResult pidValidationResult,
-    ValidationReportV0 report) {
+    ValidationReport report) {
 }

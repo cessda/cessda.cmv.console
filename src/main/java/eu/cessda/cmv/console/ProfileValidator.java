@@ -16,9 +16,10 @@
 package eu.cessda.cmv.console;
 
 import eu.cessda.cmv.core.CessdaMetadataValidatorFactory;
+import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
 import eu.cessda.cmv.core.ValidationService;
-import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
+import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.gesis.commons.resource.Resource;
 
 import java.io.ByteArrayInputStream;
@@ -28,7 +29,7 @@ import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ProfileValidator {
-    private final ValidationService.V10 validationService = new CessdaMetadataValidatorFactory().newValidationService();
+    private final ValidationService validationService = new CessdaMetadataValidatorFactory().newValidationService();
     /**
      * Cache for CMV profiles
      */
@@ -42,7 +43,7 @@ public class ProfileValidator {
      * @param validationGate the validation gate to use
      * @return the validation report
      */
-    public ValidationReportV0 validateAgainstProfile(Resource document, URI profile, ValidationGateName validationGate) {
+    public ValidationReport validateAgainstProfile(Resource document, URI profile, ValidationGateName validationGate) throws IOException, NotDocumentException {
         // Load and cache the DDI profile
         var profileResource = profileMap.computeIfAbsent(profile, CachedProfileResource::new);
         return validationService.validate(document, profileResource, validationGate);

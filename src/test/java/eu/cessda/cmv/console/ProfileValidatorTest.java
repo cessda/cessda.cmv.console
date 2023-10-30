@@ -15,10 +15,12 @@
  */
 package eu.cessda.cmv.console;
 
+import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
 import org.gesis.commons.resource.Resource;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,7 +32,7 @@ class ProfileValidatorTest {
     private final ProfileValidator profileValidator = new ProfileValidator();
 
     @Test
-    void shouldValidateDocument() throws URISyntaxException {
+    void shouldValidateDocument() throws URISyntaxException, IOException, NotDocumentException {
         var document = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
         assert document != null;
 
