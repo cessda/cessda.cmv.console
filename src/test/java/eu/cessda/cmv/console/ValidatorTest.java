@@ -16,8 +16,9 @@
 package eu.cessda.cmv.console;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
-import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
+import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.SAXException;
@@ -43,7 +44,7 @@ class ValidatorTest {
     }
 
     @Test
-    void shouldValidateDocuments() throws IOException, SAXException, URISyntaxException {
+    void shouldValidateDocuments() throws IOException, SAXException, URISyntaxException, NotDocumentException {
         var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
@@ -65,11 +66,11 @@ class ValidatorTest {
 
         // Assert that there is one result with either constraint or schema validation errors.
         assertThat(resultsMap.values()).map(ValidationResults::schemaViolations).anyMatch(schemaViolations -> !schemaViolations.isEmpty());
-        assertThat(resultsMap.values()).map(ValidationResults::report).map(ValidationReportV0::getConstraintViolations).anyMatch(c -> !c.isEmpty());
+        assertThat(resultsMap.values()).map(ValidationResults::report).map(ValidationReport::getConstraintViolations).anyMatch(c -> !c.isEmpty());
     }
 
     @Test
-    void shouldSkipCMVWhenProfileIsNotProvided() throws IOException, SAXException, URISyntaxException {
+    void shouldSkipCMVWhenProfileIsNotProvided() throws IOException, SAXException, URISyntaxException, NotDocumentException {
         var validator = new Validator(configuration, new ObjectMapper());
 
         var resultsMap = new HashMap<Path, ValidationResults>();
@@ -91,7 +92,7 @@ class ValidatorTest {
 
         // Assert that only schema violations are present
         assertThat(resultsMap.values()).map(ValidationResults::schemaViolations).anyMatch(schemaViolations -> !schemaViolations.isEmpty());
-        assertThat(resultsMap.values()).map(ValidationResults::report).map(ValidationReportV0::getConstraintViolations).allMatch(List::isEmpty);
+        assertThat(resultsMap.values()).map(ValidationResults::report).map(ValidationReport::getConstraintViolations).allMatch(List::isEmpty);
     }
 
     @Test

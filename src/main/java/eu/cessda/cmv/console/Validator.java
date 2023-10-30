@@ -17,8 +17,9 @@ package eu.cessda.cmv.console;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
-import eu.cessda.cmv.core.mediatype.validationreport.v0.ValidationReportV0;
+import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -62,7 +63,7 @@ public class Validator {
 
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
-    private static final ValidationReportV0 EMPTY_VALIDATION_REPORT = new ValidationReportV0();
+    private static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
 
@@ -160,7 +161,7 @@ public class Validator {
      */
     ValidationResults validateDocuments(
         Path documentPath, DDIVersion ddiVersion, URI profile, ValidationGateName validationGate
-    ) throws IOException, SAXException {
+    ) throws IOException, SAXException, NotDocumentException {
         var buffer = new ByteArrayInputStream(Files.readAllBytes(documentPath));
 
         // Validate against XML schema if configured
@@ -187,7 +188,7 @@ public class Validator {
         buffer.reset();
 
         // Validate against CMV profile
-        final ValidationReportV0 validationReport;
+        final ValidationReport validationReport;
         if (validationGate != null && profile != null) {
             log.debug("Validating {} against CMV profile {}", documentPath, profile);
             validationReport = profileValidator.validateAgainstProfile(new Resource() {
@@ -330,7 +331,7 @@ public class Validator {
             } else {
                 invalidRecordsCounter.incrementAndGet();
             }
-        } catch (RuntimeException | IOException | SAXException | OutOfMemoryError e) {
+        } catch (NotDocumentException | IOException | SAXException | OutOfMemoryError e) {
             // Handle unexpected exceptions and out of memory errors
             log.error("{}: Validation of {} failed", repo.code(), file, e);
         }
