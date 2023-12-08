@@ -19,9 +19,9 @@ pipeline {
 	}
 
 	environment {
-		productName = "cmv"
-		componentName = "console"
-		imageTag = "${docker_repo}/${productName}-${componentName}:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+		productName = "cdc"
+		componentName = "validator"
+		imageTag = "${DOCKER_ARTIFACT_REGISTRY}/${productName}-${componentName}:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
 	}
 
     agent {
@@ -29,7 +29,6 @@ pipeline {
     }
 
 	stages {
-		// Building on main
 		stage('Pull SDK Docker Image') {
 		    agent {
 		        docker {
@@ -47,7 +46,7 @@ pipeline {
                 }
                 stage('Record Issues') {
                     steps {
-                        recordIssues aggregatingResults: true, tools: [errorProne(), java()]
+                        recordIssues(tools: [java()])
                     }
                 }
                 stage('Run Sonar Scan') {
@@ -67,11 +66,11 @@ pipeline {
         }
 		stage('Build and Push Docker image') {
             steps {
-                sh 'gcloud auth configure-docker'
+                sh "gcloud auth configure-docker ${ARTIFACT_REGISTRY_HOST}"
                 withMaven {
                     sh "./mvnw jib:build -Dimage=${imageTag}"
                 }
-                sh "gcloud container images add-tag ${imageTag} ${docker_repo}/${productName}-${componentName}:${env.BRANCH_NAME}-latest"
+                sh "gcloud container images add-tag ${imageTag} ${DOCKER_ARTIFACT_REGISTRY}/${productName}-${componentName}:${env.BRANCH_NAME}-latest"
             }
             when { branch 'main' }
 		}
