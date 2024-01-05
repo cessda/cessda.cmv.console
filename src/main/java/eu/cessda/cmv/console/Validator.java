@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -66,9 +67,11 @@ public class Validator {
     private static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
+    private static final URI ZERO_URN = URI.create("urn:uuid:00000000-0000-0000-0000-000000000000");
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
+    private final Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     private final ProfileValidator profileValidator = new ProfileValidator();
     private final SchemaValidator schemaValidator = new SchemaValidator();
 
@@ -127,7 +130,7 @@ public class Validator {
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
                 && path.getFileName().equals(Path.of("pipeline.json"))
         )) {
-            var futures = stream.flatMap(pipelineConfigurationPath -> {
+            stream.flatMap(pipelineConfigurationPath -> {
                 try (var inputStream = Files.newInputStream(pipelineConfigurationPath)) {
                     var repository = objectMapper.readValue(inputStream, Repository.class);
                     return Stream.of(Map.entry(pipelineConfigurationPath.getParent(), repository));
@@ -135,15 +138,12 @@ public class Validator {
                     log.error("Couldn't load pipeline configuration at {}: {}", pipelineConfigurationPath, e.toString());
                     return Stream.empty();
                 }
-            }).map(r -> CompletableFuture.runAsync(
-                () -> validator.validateRepository(r.getKey(), r.getValue(), timestamp), executor)
-            ).toArray(CompletableFuture[]::new);
-
-            // Wait for validation completion
-            CompletableFuture.allOf(futures).join();
+            }).map(repositoryEntry -> CompletableFuture.runAsync(
+                () -> validator.validateRepository(repositoryEntry.getKey(), repositoryEntry.getValue(), timestamp), executor)
+            ).forEach(CompletableFuture::join); // Wait for validation completion
         } finally {
             // Shut down all thread pools
-            executor.shutdown();
+            executor.shutdownNow();
         }
     }
 
@@ -194,7 +194,7 @@ public class Validator {
             validationReport = profileValidator.validateAgainstProfile(new Resource() {
                 @Override
                 public URI getUri() {
-                    return URI.create("urn:uuid:00000000-0000-0000-0000-000000000000");
+                    return ZERO_URN;
                 }
 
                 @Override
@@ -250,7 +250,7 @@ public class Validator {
         // Create a stream of all XML files in the repository directory
         try (var sourceFilesStream = Files.find(repoPath, 1,
             (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
-                && FilenameUtils.isExtension(path.getFileName().toString(), "xml"))
+                && FilenameUtils.isExtension(path.toString(), "xml"))
         ) {
             var profile = repo.profile();
 
@@ -273,7 +273,8 @@ public class Validator {
                     } else {
                         return null;
                     }
-                }
+                },
+                executor
             )).toList();
 
             if (configuration.destinationDirectory() != null) {
