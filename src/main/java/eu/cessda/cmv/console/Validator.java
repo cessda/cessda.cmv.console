@@ -68,10 +68,11 @@ public class Validator {
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
     private static final URI ZERO_URN = URI.create("urn:uuid:00000000-0000-0000-0000-000000000000");
+    private static final Executor executor = Executors.newWorkStealingPool();
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
-    private final Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+
     private final ProfileValidator profileValidator = new ProfileValidator();
     private final SchemaValidator schemaValidator = new SchemaValidator();
 
@@ -121,9 +122,6 @@ public class Validator {
         // Set the job ID from the current time
         var timestamp = OffsetDateTime.now().toString();
 
-        // Create a single thread executor to run the validation from
-        var executor = Executors.newSingleThreadExecutor();
-
         // Discover repositories from instances of pipeline.json
         MDC.put(MDC_KEY, timestamp);
         try (var stream = Files.find(baseDirectory, Integer.MAX_VALUE,
@@ -141,9 +139,6 @@ public class Validator {
             }).map(repositoryEntry -> CompletableFuture.runAsync(
                 () -> validator.validateRepository(repositoryEntry.getKey(), repositoryEntry.getValue(), timestamp), executor)
             ).forEach(CompletableFuture::join); // Wait for validation completion
-        } finally {
-            // Shut down all thread pools
-            executor.shutdownNow();
         }
     }
 
