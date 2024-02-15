@@ -262,10 +262,11 @@ public class Validator {
                     recordCounter.incrementAndGet();
 
                     // Validate the file
-                    var valid =  validateFile(repo, file, profile, invalidRecordsCounter);
+                    var valid =  validateFile(repo, file, profile);
                     if (valid && configuration.destinationDirectory() != null) {
                         return copyToDestination(file);
                     } else {
+                        invalidRecordsCounter.incrementAndGet();
                         return null;
                     }
                 },
@@ -307,7 +308,7 @@ public class Validator {
      * @param invalidRecordsCounter the invalid records counter, this is incremented if the file is invalid.
      * @return true if the file was valid, false if validation failed
      */
-    private boolean validateFile(Repository repo, Path file, URI profile, AtomicInteger invalidRecordsCounter) {
+    private boolean validateFile(Repository repo, Path file, URI profile) {
         try {
 
             var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
@@ -324,8 +325,6 @@ public class Validator {
             // Only constraint violations block copying
             if (report.report().getConstraintViolations().isEmpty()) {
                 return true;
-            } else {
-                invalidRecordsCounter.incrementAndGet();
             }
         } catch (NotDocumentException | IOException | SAXException | OutOfMemoryError e) {
             // Handle unexpected exceptions and out of memory errors
