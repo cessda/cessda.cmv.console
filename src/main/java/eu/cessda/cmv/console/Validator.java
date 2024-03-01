@@ -62,13 +62,19 @@ public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
 
+    // Logging constants
     private static final String MDC_KEY = "validator_job";
     private static final String REPO_NAME = "repo_name";
-    private static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
+    private static final String OAI_RECORD = "oai_record";
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
+
+    private static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
     private static final URI ZERO_URN = URI.create("urn:uuid:00000000-0000-0000-0000-000000000000");
+
+    // Executor for validations
     private static final Executor executor = Executors.newWorkStealingPool();
+
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
@@ -240,7 +246,7 @@ public class Validator {
     private void validateRepository(Path repoPath, Repository repo, String timestamp) {
         configureMDC(timestamp);
 
-        log.info("{}: Performing validation.", repo.code());
+        log.info("{}: Performing validation.", value(REPO_NAME, repo.code()));
 
         // Create a stream of all XML files in the repository directory
         try (var sourceFilesStream = Files.find(repoPath, 1,
@@ -295,7 +301,7 @@ public class Validator {
                 value("invalid_records", invalidRecordsCounter)
             );
         } catch (IOException | ProfileLoadFailedException | CompletionException e) {
-            log.error("Failed to validate {}: {}", repo.code(), e.toString());
+            log.error("Failed to validate {}: {}", value(REPO_NAME, repo.code()), e.toString());
         }
     }
 
@@ -305,7 +311,6 @@ public class Validator {
      * @param repo                  the repository the file originated from.
      * @param file                  the file to validate.
      * @param profile               the profile to validate against.
-     * @param invalidRecordsCounter the invalid records counter, this is incremented if the file is invalid.
      * @return true if the file was valid, false if validation failed
      */
     private boolean validateFile(Repository repo, Path file, URI profile) {
@@ -328,7 +333,7 @@ public class Validator {
             }
         } catch (NotDocumentException | IOException | SAXException | OutOfMemoryError e) {
             // Handle unexpected exceptions and out of memory errors
-            log.error("{}: Validation of {} failed", repo.code(), file, e);
+            log.error("{}: Validation of {} failed", value(REPO_NAME, repo.code()), file, e);
         }
 
         // Either invalid, or an error occurred
@@ -385,7 +390,7 @@ public class Validator {
 
             log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
-                value("oai_record", recordIdentifier),
+                value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
                 constraintViolations.size(),
                 validPids,
@@ -397,7 +402,7 @@ public class Validator {
                 keyValue("cdc_identifier", cdcIdentifier, "")
             );
         } catch (JsonProcessingException | OutOfMemoryError e) {
-            log.error("{}: Failed to write violation reports for {}.", repo.code(), recordIdentifier, e);
+            log.error("{}: Failed to write violation reports for {}.", value(REPO_NAME, repo.code()), value(OAI_RECORD, recordIdentifier), e);
         }
     }
 
