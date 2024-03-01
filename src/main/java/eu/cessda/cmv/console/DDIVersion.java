@@ -26,6 +26,15 @@ import java.util.function.Function;
 
 // TODO - configure this from external sources
 enum DDIVersion {
+    DDI_3_3(
+        buildContext(Map.ofEntries(
+            Map.entry("ddi", "ddi:instance:3_3"),
+            Map.entry("s", "ddi:studyunit:3_3"),
+            Map.entry("r", "ddi:reusable:3_3")
+        )),
+        "//r:Citation/r:InternationalIdentifier",
+        DDIVersion::getDDILifecyclePID
+    ),
     DDI_3_2(
         buildContext(Map.ofEntries(
             Map.entry("ddi", "ddi:instance:3_2"),
@@ -33,26 +42,7 @@ enum DDIVersion {
             Map.entry("r", "ddi:reusable:3_2")
         )),
         "//r:Citation/r:InternationalIdentifier",
-        node -> {
-            String agency = null;
-            String uri = null;
-
-            var childNodeList = node.getChildNodes();
-            for (int i = 0; i < childNodeList.getLength(); i++) {
-                var childNode = childNodeList.item(i);
-
-                // Select child elements
-                if (childNode instanceof Element) {
-                    switch (childNode.getLocalName()) {
-                        case "ManagingAgency" -> agency = childNode.getTextContent().trim();
-                        case "IdentifierContent" -> uri = childNode.getTextContent().trim();
-                    }
-                }
-            }
-
-            // Return a new PID object with the validation state set to empty
-            return new PID(agency, uri, EnumSet.noneOf(PID.State.class));
-        }
+        DDIVersion::getDDILifecyclePID
     ),
     DDI_2_5(
         buildContext(Map.of("ddi", "ddi:codebook:2_5")),
@@ -64,6 +54,27 @@ enum DDIVersion {
         "//ddi:codeBook/stdyDscr/citation/titlStmt/IDNo",
         DDIVersion::getDDI25PID
     );
+
+    private static PID getDDILifecyclePID(Node node) {
+        String agency = null;
+        String uri = null;
+
+        var childNodeList = node.getChildNodes();
+        for (int i = 0; i < childNodeList.getLength(); i++) {
+            var childNode = childNodeList.item(i);
+
+            // Select child elements
+            if (childNode instanceof Element) {
+                switch (childNode.getLocalName()) {
+                    case "ManagingAgency" -> agency = childNode.getTextContent().trim();
+                    case "IdentifierContent" -> uri = childNode.getTextContent().trim();
+                }
+            }
+        }
+
+        // Return a new PID object with the validation state set to empty
+        return new PID(agency, uri, EnumSet.noneOf(PID.State.class));
+    }
 
     private final NamespaceContext namespaceContext;
     private final String pidXPath;
