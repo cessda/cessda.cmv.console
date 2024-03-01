@@ -32,7 +32,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SchemaValidator {
+class SchemaValidator {
     private final Schema schema;
     private final ThreadLocal<DocumentBuilderHandler> documentBuilderThreadLocal;
 
@@ -140,7 +140,7 @@ public class SchemaValidator {
         }
     }
 
-    record DocumentBuilderHandler(
+    private record DocumentBuilderHandler(
         DocumentBuilder builder,
         LoggingErrorHandler errorHandler
     ) {

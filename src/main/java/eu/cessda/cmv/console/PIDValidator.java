@@ -40,7 +40,7 @@ public class PIDValidator {
     private PIDValidator() {
     }
 
-    static PIDValidationResult validatePids(InputStream inputStream, DDIVersion xPathContext) throws XPathExpressionException {
+    static PIDValidationResult validatePIDs(InputStream inputStream, DDIVersion xPathContext) throws XPathExpressionException {
         var xpath = XPathFactory.newDefaultInstance().newXPath();
         xpath.setNamespaceContext(xPathContext.getNamespaceContext());
 
@@ -70,7 +70,7 @@ public class PIDValidator {
                     || uri.getPath() != null && PIDValidator.doiStringValidator(uri.getPath().replaceFirst("^/", ""))
                     // Detect if the URI is an HTTP(S) URL
                     // TODO - replace with more specific PID validation
-                    || ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))) {
+                    || ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()) || "urn".equals(uri.getScheme()))) {
                     state.add(PID.State.VALID_URI);
                 }
             } catch (URISyntaxException e) {
