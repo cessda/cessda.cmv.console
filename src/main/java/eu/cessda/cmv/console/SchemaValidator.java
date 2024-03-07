@@ -23,39 +23,35 @@ import org.xml.sax.SAXParseException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SchemaValidator {
-    private final Schema schema;
     private final ThreadLocal<DocumentBuilderHandler> documentBuilderThreadLocal;
 
     SchemaValidator() throws SAXException {
         // Find the resources for the XML schemas
-        var codebookResource = this.getClass().getResource("/schemas/codebook/codebook.xsd");
-        var lifecycleResource = this.getClass().getResource("/schemas/lifecycle/instance.xsd");
-        var nesstarResource = this.getClass().getResource("/schemas/nesstar/Version1-2-2.xsd");
-        var oaiResource = this.getClass().getResource("/schemas/oai-pmh/OAI-PMH.xsd");
+        var schemaURLs = new URL[] {
+            this.getClass().getResource("/schemas/codebook/codebook.xsd"),
+            this.getClass().getResource("/schemas/lifecycle/3.2/instance.xsd"),
+            this.getClass().getResource("/schemas/lifecycle/3.3/instance.xsd"),
+            this.getClass().getResource("/schemas/nesstar/Version1-2-2.xsd"),
+            this.getClass().getResource("/schemas/oai-pmh/OAI-PMH.xsd")
+        };
 
-        // Assert schemas are not null
-        assert codebookResource != null;
-        assert lifecycleResource != null;
-        assert nesstarResource != null;
-        assert oaiResource != null;
+        var sources = Arrays.stream(schemaURLs)
+            .map(URL::toExternalForm)
+            .map(StreamSource::new)
+            .toArray(StreamSource[]::new);
 
         // Construct schema objects from the XML schemas
-        schema = SchemaFactory.newDefaultInstance().newSchema(new Source[]{
-            new StreamSource(codebookResource.toExternalForm()),
-            new StreamSource(lifecycleResource.toExternalForm()),
-            new StreamSource(nesstarResource.toExternalForm()),
-            new StreamSource(oaiResource.toExternalForm())
-        });
+        var schema = SchemaFactory.newDefaultInstance().newSchema(sources);
 
         documentBuilderThreadLocal = ThreadLocal.withInitial(() -> {
             try {
@@ -88,7 +84,7 @@ public class SchemaValidator {
      * @throws SAXException if a parsing error occurs when validating the document.
      * @throws IOException  if an IO error occurs when validating the document.
      */
-    public SchemaValidatorResult getSchemaViolations(InputStream inputStream) throws SAXException, IOException {
+    SchemaValidatorResult getSchemaViolations(InputStream inputStream) throws SAXException, IOException {
         var documentBuilder = documentBuilderThreadLocal.get();
         var document = documentBuilder.builder().parse(inputStream);
 
