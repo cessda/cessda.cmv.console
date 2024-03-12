@@ -18,15 +18,22 @@ package eu.cessda.cmv.console;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class PIDValidatorTest {
+
+
     @Test
-    void shouldValidatePIDs() throws XPathExpressionException {
-        var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/pid.xml");
+    void shouldValidatePIDs() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        var validDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_2_5/pid.xml"));
 
         var validationResult = PIDValidator.validatePIDs(validDDIDocument, DDIVersion.DDI_2_5);
 
@@ -35,9 +42,15 @@ class PIDValidatorTest {
         assertEquals(2, validationResult.invalidPIDs().size());
     }
 
+    private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+        var factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        return factory.newDocumentBuilder();
+    }
+
     @Test
-    void shouldReportInvalidPIDs() throws XPathExpressionException {
-        var invalidDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/invalid.xml");
+    void shouldReportInvalidPIDs() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        var invalidDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_2_5/invalid.xml"));
 
         var validationResult = PIDValidator.validatePIDs(invalidDDIDocument, DDIVersion.DDI_2_5);
 
@@ -50,8 +63,8 @@ class PIDValidatorTest {
     }
 
     @Test
-    void shouldValidatePIDsInDDI3Document() throws XPathExpressionException {
-        var validDDIDocument = this.getClass().getResourceAsStream("/ddi_3_2/valid.xml");
+    void shouldValidatePIDsInDDI3Document() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        var validDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_3_2/valid.xml"));
 
         var validationResult = PIDValidator.validatePIDs(validDDIDocument, DDIVersion.DDI_3_2);
 

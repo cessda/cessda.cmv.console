@@ -17,13 +17,12 @@ package eu.cessda.cmv.console;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -40,12 +39,11 @@ public class PIDValidator {
     private PIDValidator() {
     }
 
-    static PIDValidationResult validatePIDs(InputStream inputStream, DDIVersion xPathContext) throws XPathExpressionException {
+    static PIDValidationResult validatePIDs(Document document, DDIVersion xPathContext) throws XPathExpressionException {
         var xpath = XPathFactory.newDefaultInstance().newXPath();
         xpath.setNamespaceContext(xPathContext.getNamespaceContext());
 
-        var iDNoElement = (NodeList) xpath.compile(xPathContext.getXPath())
-            .evaluate(new InputSource(inputStream), XPathConstants.NODESET);
+        var iDNoElement = (NodeList) xpath.compile(xPathContext.getXPath()).evaluate(document, XPathConstants.NODESET);
 
 
         boolean validPids = false;
@@ -57,7 +55,7 @@ public class PIDValidator {
             var state = EnumSet.noneOf(PID.State.class);
 
             // Extract persistent identifiers from the element
-            var pidElement = xPathContext.getPid(iDNoElement.item(i));
+            var pidElement = xPathContext.getPID(iDNoElement.item(i));
 
             // Validate URI and check if the URI is absolute.
             try {

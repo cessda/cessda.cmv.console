@@ -179,7 +179,7 @@ public class Validator {
         // Validate persistent identifiers
         PIDValidationResult pidValidationResult;
         try {
-            pidValidationResult = PIDValidator.validatePIDs(buffer, ddiVersion);
+            pidValidationResult = PIDValidator.validatePIDs(schemaValidatorResult.document(), ddiVersion);
         } catch (XPathExpressionException e) {
             pidValidationResult = null;
             log.error("PID validation of {} failed: {}", documentPath, e.toString());

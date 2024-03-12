@@ -129,7 +129,7 @@ enum DDIVersion {
      * @param n the node
      * @return the agency.
      */
-    public PID getPid(Node n) {
+    public PID getPID(Node n) {
         return getPid.apply(n);
     }
 }
