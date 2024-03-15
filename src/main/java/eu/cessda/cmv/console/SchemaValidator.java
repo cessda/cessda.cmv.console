@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SchemaValidator {
+class SchemaValidator {
     private final ThreadLocal<DocumentBuilderHandler> documentBuilderThreadLocal;
 
     SchemaValidator() throws SAXException {
@@ -136,7 +136,7 @@ public class SchemaValidator {
         }
     }
 
-    record DocumentBuilderHandler(
+    private record DocumentBuilderHandler(
         DocumentBuilder builder,
         LoggingErrorHandler errorHandler
     ) {
