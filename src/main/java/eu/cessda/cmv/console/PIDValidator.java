@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -30,24 +31,27 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class PIDValidator {
+@SuppressWarnings("java:S5164")
+class PIDValidator {
     private static final Logger log = LoggerFactory.getLogger(PIDValidator.class);
 
     private static final Set<String> ALLOWED_AGENCY_VALUES = Set.of("ark", "doi", "handle", "urn");
     private static final EnumSet<PID.State> PID_STATES = EnumSet.allOf(PID.State.class);
 
-    private PIDValidator() {
-    }
+    private final ThreadLocal<XPath> xpathThreadLocal = ThreadLocal.withInitial(() -> XPathFactory.newDefaultInstance().newXPath());
 
-    static PIDValidationResult validatePIDs(Document document, DDIVersion xPathContext) throws XPathExpressionException {
-        var xpath = XPathFactory.newDefaultInstance().newXPath();
+    PIDValidationResult validatePIDs(Document document, DDIVersion xPathContext) throws XPathExpressionException {
+
+        // Set namespace context
+        var xpath = xpathThreadLocal.get();
         xpath.setNamespaceContext(xPathContext.getNamespaceContext());
 
         var iDNoElement = (NodeList) xpath.compile(xPathContext.getXPath()).evaluate(document, XPathConstants.NODESET);
 
 
         boolean validPids = false;
-        var pidList = new ArrayList<PID>(iDNoElement.getLength());
+        var validPIDList = new ArrayList<PID>(iDNoElement.getLength());
+        var invalidPIDList = new ArrayList<PID>(iDNoElement.getLength());
 
         for (int i = 0; i < iDNoElement.getLength(); i++) {
 
@@ -86,15 +90,19 @@ public class PIDValidator {
                 }
             }
 
+            // Collect all PID information
+            var pid = new PID(pidElement.agency(), pidElement.uri(), state);
+
             // If all states are present, then the PID is valid
             if (state.containsAll(PID_STATES)) {
+                validPIDList.add(pid);
                 validPids = true;
+            } else {
+                invalidPIDList.add(pid);
             }
-
-            pidList.add(new PID(pidElement.agency(), pidElement.uri(), state));
         }
 
-        return new PIDValidationResult(validPids, pidList);
+        return new PIDValidationResult(validPids, validPIDList, invalidPIDList);
     }
 
     /**

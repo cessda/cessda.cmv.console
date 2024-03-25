@@ -30,17 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PIDValidatorTest {
 
-
-    @Test
-    void shouldValidatePIDs() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
-        var validDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_2_5/pid.xml"));
-
-        var validationResult = PIDValidator.validatePIDs(validDDIDocument, DDIVersion.DDI_2_5);
-
-        // Assert that the document was treated as valid and that 2 PIDs were validated
-        assertTrue(validationResult.valid());
-        assertEquals(2, validationResult.invalidPIDs().size());
-    }
+    private final PIDValidator pidValidator = new PIDValidator();
 
     private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
         var factory = DocumentBuilderFactory.newInstance();
@@ -49,10 +39,22 @@ class PIDValidatorTest {
     }
 
     @Test
+    void shouldValidatePIDs() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        var validDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_2_5/pid.xml"));
+
+        var validationResult = pidValidator.validatePIDs(validDDIDocument, DDIVersion.DDI_2_5);
+
+        // Assert that the document was treated as valid and that 2 PIDs were validated
+        assertTrue(validationResult.valid());
+        assertEquals(1, validationResult.validPIDs().size());
+        assertEquals(1, validationResult.invalidPIDs().size());
+    }
+
+    @Test
     void shouldReportInvalidPIDs() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
         var invalidDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_2_5/invalid.xml"));
 
-        var validationResult = PIDValidator.validatePIDs(invalidDDIDocument, DDIVersion.DDI_2_5);
+        var validationResult = pidValidator.validatePIDs(invalidDDIDocument, DDIVersion.DDI_2_5);
 
         // Assert that no valid PIDs are found
         assertFalse(validationResult.valid());
@@ -66,11 +68,12 @@ class PIDValidatorTest {
     void shouldValidatePIDsInDDI3Document() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
         var validDDIDocument = getDocumentBuilder().parse(this.getClass().getResourceAsStream("/ddi_3_2/valid.xml"));
 
-        var validationResult = PIDValidator.validatePIDs(validDDIDocument, DDIVersion.DDI_3_2);
+        var validationResult = pidValidator.validatePIDs(validDDIDocument, DDIVersion.DDI_3_2);
 
         // Assert that the document was treated as valid and that 2 PIDs were validated
         assertTrue(validationResult.valid());
-        assertEquals(2, validationResult.invalidPIDs().size());
+        assertEquals(1, validationResult.validPIDs().size());
+        assertEquals(1, validationResult.invalidPIDs().size());
     }
 
     @Test

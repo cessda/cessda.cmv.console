@@ -79,6 +79,7 @@ public class Validator {
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
 
+    private final PIDValidator pidValidator = new PIDValidator();
     private final ProfileValidator profileValidator = new ProfileValidator();
     private final SchemaValidator schemaValidator = new SchemaValidator();
 
@@ -179,7 +180,7 @@ public class Validator {
         // Validate persistent identifiers
         PIDValidationResult pidValidationResult;
         try {
-            pidValidationResult = PIDValidator.validatePIDs(schemaValidatorResult.document(), ddiVersion);
+            pidValidationResult = pidValidator.validatePIDs(schemaValidatorResult.document(), ddiVersion);
         } catch (XPathExpressionException e) {
             pidValidationResult = null;
             log.error("PID validation of {} failed: {}", documentPath, e.toString());
@@ -367,11 +368,10 @@ public class Validator {
 
             var validPids = report.pidValidationResult().valid();
 
-            String pidJson = null;
-            if (!validPids) {
-                pidJson = objectMapper.writeValueAsString(report.pidValidationResult());
-            }
+            // Persistent identifier report
+            var pidJson = objectMapper.writeValueAsString(report.pidValidationResult());
 
+            // XSD schema violations
             var schemaViolations = report.schemaViolations();
             final String schemaViolationsString;
             if (!schemaViolations.isEmpty()) {
@@ -380,6 +380,7 @@ public class Validator {
                 schemaViolationsString = null;
             }
 
+            // CMV constraint violations
             var constraintViolations = report.report().getConstraintViolations();
             final String constraintViolationsString;
             if (!constraintViolations.isEmpty()) {
