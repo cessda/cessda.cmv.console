@@ -46,7 +46,8 @@ class PIDValidatorTest {
 
         // Assert that the document was treated as valid and that 2 PIDs were validated
         assertTrue(validationResult.valid());
-        assertEquals(2, validationResult.invalidPIDs().size());
+        assertEquals(1, validationResult.validPIDs().size());
+        assertEquals(1, validationResult.invalidPIDs().size());
     }
 
     @Test
@@ -71,7 +72,8 @@ class PIDValidatorTest {
 
         // Assert that the document was treated as valid and that 2 PIDs were validated
         assertTrue(validationResult.valid());
-        assertEquals(2, validationResult.invalidPIDs().size());
+        assertEquals(1, validationResult.validPIDs().size());
+        assertEquals(1, validationResult.invalidPIDs().size());
     }
 
     @Test
