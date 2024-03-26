@@ -146,6 +146,8 @@ public class Validator {
             }).map(repositoryEntry -> CompletableFuture.runAsync(
                 () -> validator.validateRepository(repositoryEntry.getKey(), repositoryEntry.getValue(), timestamp), executor)
             ).forEach(CompletableFuture::join); // Wait for validation completion
+        } catch (IOException e) {
+            log.error("Couldn't discover repositories at {}: {}", baseDirectory, e.toString());
         }
     }
 
@@ -369,7 +371,8 @@ public class Validator {
             var validPids = report.pidValidationResult().valid();
 
             // Persistent identifier report
-            var pidJson = objectMapper.writeValueAsString(report.pidValidationResult());
+            var validPIDList = objectMapper.writeValueAsString(report.pidValidationResult().validPIDs());
+            var invalidPIDList = objectMapper.writeValueAsString(report.pidValidationResult().invalidPIDs());
 
             // XSD schema violations
             var schemaViolations = report.schemaViolations();
@@ -389,17 +392,18 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}.",
+            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
                 constraintViolations.size(),
-                validPids,
+                value("valid_pids", validPids),
                 keyValue("profile_name", profile, ""),
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, ""),
-                keyValue("pid_report", pidJson, ""),
+                keyValue("valid_pid_report", validPIDList, ""),
+                keyValue("invalid_pid_report", invalidPIDList, ""),
                 keyValue("cdc_identifier", cdcIdentifier, "")
             );
         } catch (JsonProcessingException | OutOfMemoryError e) {
