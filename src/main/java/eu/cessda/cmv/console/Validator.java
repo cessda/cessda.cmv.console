@@ -41,9 +41,7 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.file.*;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -371,8 +369,8 @@ public class Validator {
             var validPids = report.pidValidationResult().valid();
 
             // Persistent identifier report
-            var validPIDList = objectMapper.writeValueAsString(report.pidValidationResult().validPIDs());
-            var invalidPIDList = objectMapper.writeValueAsString(report.pidValidationResult().invalidPIDs());
+            var validPIDList = report.pidValidationResult().validPIDs();
+            var invalidPIDList = report.pidValidationResult().invalidPIDs();
 
             // XSD schema violations
             var schemaViolations = report.schemaViolations();
@@ -449,10 +447,10 @@ public class Validator {
             directoryStream = Files.newDirectoryStream(destinationPath, "*.xml");
         } catch (NoSuchFileException e) {
             // Handle the case where the directory cannot be found separately from when individual files cannot be found
-            log.debug("{}: Destination directory \"{}\" not found", repository.code(), destinationPath);
+            log.debug("{}: Destination directory \"{}\" not found", value(REPO_NAME, repository.code()), destinationPath);
             return;
         } catch (IOException e) {
-            log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), destinationPath, e.toString());
+            log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), destinationPath, e.toString());
             return;
         }
 
@@ -466,14 +464,14 @@ public class Validator {
                 }
             }
         } catch (DirectoryIteratorException | IOException e) {
-            log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), destinationPath, e.toString());
+            log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), destinationPath, e.toString());
         }
 
         // Log if files are deleted at INFO level, always log at debug
         if (log.isDebugEnabled()) {
-            log.debug(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
+            log.debug(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
         } else if (filesDeleted > 0) {
-            log.info(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
+            log.info(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
         }
     }
 
