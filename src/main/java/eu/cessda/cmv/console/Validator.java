@@ -41,9 +41,7 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.file.*;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -146,6 +144,8 @@ public class Validator {
             }).map(repositoryEntry -> CompletableFuture.runAsync(
                 () -> validator.validateRepository(repositoryEntry.getKey(), repositoryEntry.getValue(), timestamp), executor)
             ).forEach(CompletableFuture::join); // Wait for validation completion
+        } catch (IOException e) {
+            log.error("Couldn't discover repositories at {}: {}", baseDirectory, e.toString());
         }
     }
 
@@ -369,7 +369,8 @@ public class Validator {
             var validPids = report.pidValidationResult().valid();
 
             // Persistent identifier report
-            var pidJson = objectMapper.writeValueAsString(report.pidValidationResult());
+            var validPIDList = report.pidValidationResult().validPIDs();
+            var invalidPIDList = report.pidValidationResult().invalidPIDs();
 
             // XSD schema violations
             var schemaViolations = report.schemaViolations();
@@ -389,17 +390,18 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}.",
+            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
                 constraintViolations.size(),
-                validPids,
+                value("valid_pids", validPids),
                 keyValue("profile_name", profile, ""),
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, ""),
-                keyValue("pid_report", pidJson, ""),
+                keyValue("valid_pid_report", validPIDList, ""),
+                keyValue("invalid_pid_report", invalidPIDList, ""),
                 keyValue("cdc_identifier", cdcIdentifier, "")
             );
         } catch (JsonProcessingException | OutOfMemoryError e) {
@@ -445,10 +447,10 @@ public class Validator {
             directoryStream = Files.newDirectoryStream(destinationPath, "*.xml");
         } catch (NoSuchFileException e) {
             // Handle the case where the directory cannot be found separately from when individual files cannot be found
-            log.debug("{}: Destination directory \"{}\" not found", repository.code(), destinationPath);
+            log.debug("{}: Destination directory \"{}\" not found", value(REPO_NAME, repository.code()), destinationPath);
             return;
         } catch (IOException e) {
-            log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), destinationPath, e.toString());
+            log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), destinationPath, e.toString());
             return;
         }
 
@@ -462,14 +464,14 @@ public class Validator {
                 }
             }
         } catch (DirectoryIteratorException | IOException e) {
-            log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), destinationPath, e.toString());
+            log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), destinationPath, e.toString());
         }
 
         // Log if files are deleted at INFO level, always log at debug
         if (log.isDebugEnabled()) {
-            log.debug(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
+            log.debug(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
         } else if (filesDeleted > 0) {
-            log.info(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
+            log.info(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
         }
     }
 
