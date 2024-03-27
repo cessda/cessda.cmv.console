@@ -41,7 +41,10 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.file.*;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -369,8 +372,21 @@ public class Validator {
             var validPids = report.pidValidationResult().valid();
 
             // Persistent identifier report
-            var validPIDList = report.pidValidationResult().validPIDs();
-            var invalidPIDList = report.pidValidationResult().invalidPIDs();
+            var validPIDURIs = new ArrayList<String>();
+            var validPIDAgency = new ArrayList<String>();
+            for (var validPID : report.pidValidationResult().validPIDs()) {
+                validPIDAgency.add(validPID.agency());
+                validPIDAgency.add(validPID.uri());
+            }
+
+            var invalidPIDAgency = new ArrayList<String>();
+            var invalidPIDURIs = new ArrayList<String>();
+            var invalidPIDState = new ArrayList<String>();
+            for (var invalidPID :  report.pidValidationResult().invalidPIDs()) {
+                invalidPIDAgency.add(invalidPID.agency());
+                invalidPIDURIs.add(invalidPID.uri());
+                invalidPIDState.add(invalidPID.state().toString());
+            }
 
             // XSD schema violations
             var schemaViolations = report.schemaViolations();
@@ -390,7 +406,7 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}.",
+            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
@@ -400,8 +416,11 @@ public class Validator {
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, ""),
-                keyValue("valid_pid_report", validPIDList, ""),
-                keyValue("invalid_pid_report", invalidPIDList, ""),
+                keyValue("valid_pid_agency", validPIDAgency, ""),
+                keyValue("valid_pid_uri", validPIDURIs, ""),
+                keyValue("invalid_pid_agency", invalidPIDAgency, ""),
+                keyValue("invalid_pid_uri", invalidPIDURIs, ""),
+                keyValue("invalid_pid_state", invalidPIDState, ""),
                 keyValue("cdc_identifier", cdcIdentifier, "")
             );
         } catch (JsonProcessingException | OutOfMemoryError e) {
