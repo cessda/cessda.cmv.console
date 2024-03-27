@@ -376,7 +376,7 @@ public class Validator {
             var validPIDAgency = new ArrayList<String>();
             for (var validPID : report.pidValidationResult().validPIDs()) {
                 validPIDAgency.add(validPID.agency());
-                validPIDAgency.add(validPID.uri());
+                validPIDURIs.add(validPID.uri());
             }
 
             var invalidPIDAgency = new ArrayList<String>();
