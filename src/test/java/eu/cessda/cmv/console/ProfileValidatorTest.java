@@ -17,7 +17,6 @@ package eu.cessda.cmv.console;
 
 import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
-import org.gesis.commons.resource.Resource;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -37,7 +36,7 @@ class ProfileValidatorTest {
         assert document != null;
 
         var results = profileValidator.validateAgainstProfile(
-            Resource.newResource(document), this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(), ValidationGateName.BASIC
+            document, this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(), ValidationGateName.BASIC
         );
 
         assertTrue(results.getConstraintViolations().isEmpty());
@@ -50,10 +49,9 @@ class ProfileValidatorTest {
 
         // Empty input stream, should not be consumed.
         var nullInputStream = InputStream.nullInputStream();
-        var nullResource = Resource.newResource(nullInputStream);
 
         assertThrows(ProfileLoadFailedException.class, () ->
-            profileValidator.validateAgainstProfile(nullResource, uri, ValidationGateName.BASIC)
+            profileValidator.validateAgainstProfile(nullInputStream, uri, ValidationGateName.BASIC)
         );
     }
 }

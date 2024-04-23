@@ -17,65 +17,49 @@ package eu.cessda.cmv.console;
 
 import eu.cessda.cmv.core.CessdaMetadataValidatorFactory;
 import eu.cessda.cmv.core.NotDocumentException;
+import eu.cessda.cmv.core.Profile;
 import eu.cessda.cmv.core.ValidationGateName;
-import eu.cessda.cmv.core.ValidationService;
 import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
-import org.gesis.commons.resource.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ProfileValidator {
-    private final ValidationService validationService = new CessdaMetadataValidatorFactory().newValidationService();
+    private static final Logger log = LoggerFactory.getLogger(ProfileValidator.class);
+
+    /**
+     * Validator factory, creates the CMV documents and profiles
+     */
+    private final CessdaMetadataValidatorFactory validatorFactory = new CessdaMetadataValidatorFactory();
+
     /**
      * Cache for CMV profiles
      */
-    private final ConcurrentHashMap<URI, Resource> profileMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<URI, Profile> profileMap = new ConcurrentHashMap<>();
 
     /**
      * Validate the given XML document against a DDI profile.
      *
-     * @param document       the document to validate
-     * @param profile        the profile to validate the document against
+     * @param documentStream the document to validate
+     * @param profileURI     the profile to validate the document against
      * @param validationGate the validation gate to use
      * @return the validation report
      */
-    public ValidationReport validateAgainstProfile(Resource document, URI profile, ValidationGateName validationGate) throws IOException, NotDocumentException {
+    public ValidationReport validateAgainstProfile(InputStream documentStream, URI profileURI, ValidationGateName validationGate) throws IOException, NotDocumentException {
         // Load and cache the DDI profile
-        var profileResource = profileMap.computeIfAbsent(profile, CachedProfileResource::new);
-        return validationService.validate(document, profileResource, validationGate);
-    }
-
-    private static class CachedProfileResource implements Resource {
-        private final URI source;
-        private final byte[] buffer;
-
-        /**
-         * Create a new instance of a CachedProfileResource, reading the URL into a buffer.
-         *
-         * @param source the URI of the profile.
-         * @throws ProfileLoadFailedException if an IO error occurred.
-         */
-        private CachedProfileResource(URI source) {
-            this.source = source;
-            try (var inputStream = source.toURL().openStream()) {
-                this.buffer = inputStream.readAllBytes();
-            } catch (IOException e) {
+        var profile = profileMap.computeIfAbsent(profileURI, p -> {
+            try {
+                log.debug("Parsing CMV profile \"{}\"", p);
+                return validatorFactory.newProfile(p);
+            } catch (NotDocumentException | IOException e) {
                 throw new ProfileLoadFailedException(e);
             }
-        }
-
-        @Override
-        public URI getUri() {
-            return source;
-        }
-
-        @Override
-        public InputStream readInputStream() {
-            return new ByteArrayInputStream(buffer);
-        }
+        });
+        var document = validatorFactory.newDocument(documentStream);
+        return validatorFactory.validate(document, profile, validationGate);
     }
 }

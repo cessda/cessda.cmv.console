@@ -23,7 +23,6 @@ import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.gesis.commons.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -35,7 +34,6 @@ import org.xml.sax.SAXParseException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -71,7 +69,6 @@ public class Validator {
 
     private static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
-    private static final URI ZERO_URN = URI.create("urn:uuid:00000000-0000-0000-0000-000000000000");
 
     // Executor for validations
     private static final Executor executor = Executors.newWorkStealingPool();
@@ -196,17 +193,7 @@ public class Validator {
         final ValidationReport validationReport;
         if (validationGate != null && profile != null) {
             log.debug("Validating {} against CMV profile {}", documentPath, profile);
-            validationReport = profileValidator.validateAgainstProfile(new Resource() {
-                @Override
-                public URI getUri() {
-                    return ZERO_URN;
-                }
-
-                @Override
-                public InputStream readInputStream() {
-                    return buffer;
-                }
-            }, profile, validationGate);
+            validationReport = profileValidator.validateAgainstProfile(buffer, profile, validationGate);
         } else {
             log.debug("CMV profile validation disabled for {}", documentPath);
             validationReport = EMPTY_VALIDATION_REPORT;
@@ -272,9 +259,13 @@ public class Validator {
                     recordCounter.incrementAndGet();
 
                     // Validate the file
-                    var valid =  validateFile(repo, file, profile);
-                    if (valid && configuration.destinationDirectory() != null) {
-                        return copyToDestination(file);
+                    var valid = validateFile(repo, file, profile);
+                    if (valid) {
+                        if (configuration.destinationDirectory() != null) {
+                            return copyToDestination(file);
+                        } else {
+                            return null;
+                        }
                     } else {
                         invalidRecordsCounter.incrementAndGet();
                         return null;
