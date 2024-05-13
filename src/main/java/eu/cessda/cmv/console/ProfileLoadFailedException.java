@@ -15,19 +15,22 @@
  */
 package eu.cessda.cmv.console;
 
-import java.io.IOException;
+import java.io.Serial;
 import java.util.Objects;
 
 /**
  * Thrown when an IO error prevents the CMV profile from being loaded.
  */
 public class ProfileLoadFailedException extends RuntimeException {
+    @Serial
+    private static final long serialVersionUID = -2846516401063112182L;
+
     /**
      * Constructs a new {@link ProfileLoadFailedException} with the specified cause.
      *
      * @param e the cause, must not be null.
      */
-    public ProfileLoadFailedException(IOException e) {
+    public ProfileLoadFailedException(Throwable e) {
         super(Objects.requireNonNull(e, "exception must not be null"));
     }
 }
