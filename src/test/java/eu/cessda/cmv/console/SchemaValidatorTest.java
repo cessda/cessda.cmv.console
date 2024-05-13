@@ -76,10 +76,11 @@ class SchemaValidatorTest {
     }
 
     @Test
-    void shouldThrowOnFatalError() {
+    void shouldThrowOnFatalError() throws SAXException {
         var emptyStream = InputStream.nullInputStream();
 
         // Attempting to parse an empty stream should throw an exception.
-        assertThrows(SAXException.class, () -> new SchemaValidator().getSchemaViolations(emptyStream));
+        var schemaValidator = new SchemaValidator();
+        assertThrows(SAXException.class, () -> schemaValidator.getSchemaViolations(emptyStream));
     }
 }
