@@ -33,11 +33,12 @@ class ProfileValidatorTest {
     @Test
     void shouldValidateDocument() throws URISyntaxException, IOException, NotDocumentException {
         var document = this.getClass().getResourceAsStream("/ddi_2_5/valid.xml");
-        assert document != null;
+        var profile = this.getClass().getResource("/profiles/cdc-ddi2.5.xml");
 
-        var results = profileValidator.validateAgainstProfile(
-            document, this.getClass().getResource("/profiles/cdc-ddi2.5.xml").toURI(), ValidationGateName.BASIC
-        );
+        assert document != null;
+        assert profile != null;
+
+        var results = profileValidator.validateAgainstProfile(document, profile.toURI(), ValidationGateName.BASIC);
 
         assertTrue(results.getConstraintViolations().isEmpty());
     }
