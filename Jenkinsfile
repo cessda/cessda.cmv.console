@@ -33,7 +33,6 @@ pipeline {
 		    agent {
 		        docker {
                     image 'eclipse-temurin:21'
-                    args '--user root'
                     reuseNode true
                 }
             }
