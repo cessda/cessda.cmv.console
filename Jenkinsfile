@@ -36,6 +36,9 @@ pipeline {
                     reuseNode true
                 }
             }
+            environment {
+                HOME = "${WORKSPACE_TMP}"
+            }
 		    stages {
                 stage('Build Project') {
                     steps {
