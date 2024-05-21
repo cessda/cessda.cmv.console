@@ -102,7 +102,7 @@ public class Validator {
         }
 
         // Parse the first argument as the base path
-        var baseDirectory = Path.of(commandLine.getArgList().get(0));
+        var baseDirectory = Path.of(commandLine.getArgList().getFirst());
 
         // Optional configuration
         Path destinationDirectory = null;
