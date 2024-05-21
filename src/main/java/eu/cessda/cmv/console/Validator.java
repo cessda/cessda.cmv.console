@@ -39,17 +39,14 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.file.*;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -129,23 +126,63 @@ public class Validator {
 
         // Discover repositories from instances of pipeline.json
         MDC.put(MDC_KEY, timestamp);
-        try (var stream = Files.find(baseDirectory, Integer.MAX_VALUE,
-            (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
-                && path.getFileName().equals(Path.of("pipeline.json"))
-        )) {
-            stream.flatMap(pipelineConfigurationPath -> {
-                try (var inputStream = Files.newInputStream(pipelineConfigurationPath)) {
-                    var repository = objectMapper.readValue(inputStream, Repository.class);
-                    return Stream.of(Map.entry(pipelineConfigurationPath.getParent(), repository));
-                } catch (IOException e) {
-                    log.error("Couldn't load pipeline configuration at {}: {}", pipelineConfigurationPath, e.toString());
-                    return Stream.empty();
+
+        // Initialise the directory walker
+        var walker = new DirectoryWalker(objectMapper, validator, timestamp);
+        var completableFutures = walker.walkDirectory(baseDirectory);
+        completableFutures.forEach(CompletableFuture::join);
+    }
+
+    static class DirectoryWalker {
+
+        private final ObjectMapper objectMapper;
+        private final Validator validator;
+        private final String timestamp;
+
+        DirectoryWalker(ObjectMapper objectMapper, Validator validator, String timestamp) {
+            this.objectMapper = objectMapper;
+            this.validator = validator;
+            this.timestamp = timestamp;
+        }
+
+        List<CompletableFuture<Void>> walkDirectory(Path directory) throws IOException {
+            var validationOperations = new ArrayList<CompletableFuture<Void>>();
+
+            try (var directoryStream = Files.newDirectoryStream(directory)) {
+                // Get entry
+                for (var entry : directoryStream) {
+                    if (Files.isDirectory(entry)) {
+
+                        // Recurse, search the directory
+                        var recursedValidationOperations = walkDirectory(entry);
+                        validationOperations.addAll(recursedValidationOperations);
+
+                    } else if (entry.getFileName().equals(Path.of("pipeline.json"))) {
+
+                        // Start a validation
+                        var validationExecution = parseRepositoryConfiguration(entry);
+                        validationOperations.add(validationExecution);
+
+                    }
                 }
-            }).map(repositoryEntry -> CompletableFuture.runAsync(
-                () -> validator.validateRepository(repositoryEntry.getKey(), repositoryEntry.getValue(), timestamp), executor)
-            ).forEach(CompletableFuture::join); // Wait for validation completion
-        } catch (IOException e) {
-            log.error("Couldn't discover repositories at {}: {}", baseDirectory, e.toString());
+            } catch (DirectoryIteratorException | IOException e) {
+                log.error("Couldn't discover repositories at {}: {}", directory, e.toString());
+            }
+
+            return validationOperations;
+        }
+
+        private CompletableFuture<Void> parseRepositoryConfiguration(Path entry) {
+            // Parse the repository information and start a validation
+            try (var inputStream = Files.newInputStream(entry)) {
+                var repository = objectMapper.readValue(inputStream, Repository.class);
+                return CompletableFuture.runAsync(() -> validator.validateRepository(entry.getParent(), repository, timestamp), executor);
+            } catch (IOException e) {
+
+                // Failed to start validation, log and return an empty future
+                log.error("Couldn't load pipeline configuration at {}: {}", entry, e.toString());
+                return CompletableFuture.completedFuture(null);
+            }
         }
     }
 
@@ -240,18 +277,18 @@ public class Validator {
         log.info("{}: Performing validation.", value(REPO_NAME, repo.code()));
 
         // Create a stream of all XML files in the repository directory
-        try (var sourceFilesStream = Files.find(repoPath, 1,
-            (path, basicFileAttributes) -> basicFileAttributes.isRegularFile()
-                && FilenameUtils.isExtension(path.toString(), "xml"))
+        try (var sourceFilesStream = Files.newDirectoryStream(repoPath, Validator::xmlPathFilter)
         ) {
+
+
             var profile = repo.profile();
 
             var recordCounter = new AtomicInteger();
             var invalidRecordsCounter = new AtomicInteger();
 
             // Each validation is scheduled to run asynchronously whilst files are being discovered.
-            var futures = sourceFilesStream.map(file -> CompletableFuture.supplyAsync(
-                () -> {
+            var futures = StreamSupport.stream(sourceFilesStream.spliterator(), false)
+                .map(file -> CompletableFuture.supplyAsync(() -> {
                     // Configure the MDC context
                     configureMDC(timestamp);
 
@@ -295,7 +332,7 @@ public class Validator {
                 value("validated_records", recordCounter),
                 value("invalid_records", invalidRecordsCounter)
             );
-        } catch (IOException | ProfileLoadFailedException | CompletionException e) {
+        } catch (DirectoryIteratorException | IOException | ProfileLoadFailedException | CompletionException e) {
             log.error("Failed to validate {}: {}", value(REPO_NAME, repo.code()), e.toString());
         }
     }
@@ -445,7 +482,7 @@ public class Validator {
      * @param repository the source repository.
      * @param records    a {@link HashSet} of record paths that passed validation.
      */
-    @SuppressWarnings("java:S2629")
+    @SuppressWarnings({"java:S1141", "java:S2629"})
     private void deleteOrphanedRecords(Repository repository, Path repositoryPath, HashSet<Path> records) {
         // Derive the destination path of this repository from the repository source path
         Path destinationPath = getDestinationPath(repositoryPath);
@@ -454,27 +491,35 @@ public class Validator {
 
         DirectoryStream<Path> directoryStream;
         try {
-            directoryStream = Files.newDirectoryStream(destinationPath, "*.xml");
+            directoryStream = Files.newDirectoryStream(destinationPath, Validator::xmlPathFilter);
         } catch (NoSuchFileException e) {
             // Handle the case where the directory cannot be found separately from when individual files cannot be found
             log.debug("{}: Destination directory \"{}\" not found", value(REPO_NAME, repository.code()), destinationPath);
             return;
         } catch (IOException e) {
-            log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), destinationPath, e.toString());
+            logCleanupFailure(repository, destinationPath, e);
             return;
         }
 
-        try (directoryStream) {
+        try {
             for (var file : directoryStream) {
                 if (!records.contains(file.getFileName())) {
                     // Delete the records.
-                    Files.delete(file);
-                    filesDeleted++;
-                    log.debug("{}: Deleted {}", repository.code(), file);
+                    try {
+                        Files.delete(file);
+                        filesDeleted++;
+                        log.debug("{}: Deleted {}", repository.code(), file);
+                    } catch (IOException e) {
+                        logCleanupFailure(repository, file, e);
+                    }
                 }
             }
-        } catch (DirectoryIteratorException | IOException e) {
-            log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), destinationPath, e.toString());
+        } finally {
+            try {
+                directoryStream.close();
+            } catch (IOException e) {
+                logCleanupFailure(repository, destinationPath, e);
+            }
         }
 
         // Log if files are deleted at INFO level, always log at debug
@@ -483,6 +528,14 @@ public class Validator {
         } else if (filesDeleted > 0) {
             log.info(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
         }
+    }
+
+    private static void logCleanupFailure(Repository repository, Path file, IOException e) {
+        log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), file, e.toString());
+    }
+
+    private static boolean xmlPathFilter(Path entry) {
+        return FilenameUtils.isExtension(entry.toString(), "xml");
     }
 
     /**

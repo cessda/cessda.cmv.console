@@ -54,7 +54,7 @@ class ValidatorTest {
                 var validationResultsEntry = validator.validateDocuments(
                     document,
                     DDIVersion.DDI_2_5,
-                    URI.create("https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml"),
+                    Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
                     ValidationGateName.BASIC
                 );
                 resultsMap.put(document, validationResultsEntry);
@@ -65,8 +65,8 @@ class ValidatorTest {
         assertEquals(4, resultsMap.size());
 
         // Assert that there is one result with either constraint or schema validation errors.
-        assertThat(resultsMap.values()).map(ValidationResults::schemaViolations).anyMatch(schemaViolations -> !schemaViolations.isEmpty());
-        assertThat(resultsMap.values()).map(ValidationResults::report).map(ValidationReport::getConstraintViolations).anyMatch(c -> !c.isEmpty());
+        assertThat(resultsMap.values()).map(ValidationResults::schemaViolations).isNotEmpty();
+        assertThat(resultsMap.values()).map(ValidationResults::report).map(ValidationReport::getConstraintViolations).isNotEmpty();
     }
 
     @Test
@@ -103,7 +103,7 @@ class ValidatorTest {
         assertThrows(SAXException.class, () -> validator.validateDocuments(
             invalidDocument,
             DDIVersion.DDI_2_5,
-            URI.create("https://cmv.cessda.eu/profiles/cdc/ddi-2.5/latest/profile.xml"),
+            Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
             ValidationGateName.BASIC)
         );
     }
