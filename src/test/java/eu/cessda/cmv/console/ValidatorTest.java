@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ValidatorTest {
@@ -49,7 +50,7 @@ class ValidatorTest {
 
         var resultsMap = new HashMap<Path, ValidationResults>();
         var ddi25Documents = Path.of(Objects.requireNonNull(this.getClass().getResource("/ddi_2_5")).toURI());
-        try (var directoryStream = Files.newDirectoryStream(ddi25Documents)) {
+        try (var directoryStream = Files.newDirectoryStream(ddi25Documents, Validator::xmlPathFilter)) {
             for (var document : directoryStream) {
                 var validationResultsEntry = validator.validateDocuments(
                     document,
@@ -75,7 +76,7 @@ class ValidatorTest {
 
         var resultsMap = new HashMap<Path, ValidationResults>();
         var ddi25Documents = Path.of(Objects.requireNonNull(this.getClass().getResource("/ddi_2_5")).toURI());
-        try (var directoryStream = Files.newDirectoryStream(ddi25Documents)) {
+        try (var directoryStream = Files.newDirectoryStream(ddi25Documents, Validator::xmlPathFilter)) {
             for (var document : directoryStream) {
                 var validationResultsEntry = validator.validateDocuments(
                     document,
@@ -112,9 +113,14 @@ class ValidatorTest {
     void shouldCopyValidatedRecords(@TempDir Path source, @TempDir Path destination) throws URISyntaxException, IOException {
         // Discover test documents and copy them
         var ddi25Documents = Path.of(Objects.requireNonNull(this.getClass().getResource("/ddi_2_5")).toURI());
+        var ddi25Source = source.resolve("ddi_2_5");
+
+        // Create the subdirectory
+        Files.createDirectory(ddi25Source);
+
         try (var fileList = Files.newDirectoryStream(ddi25Documents)) {
             for (var document : fileList) {
-                Files.copy(document, source.resolve(document.getFileName()));
+                Files.copy(document, ddi25Source.resolve(document.getFileName()));
             }
         } catch (IOException e) {
             throw new AssertionError(e);
@@ -128,7 +134,7 @@ class ValidatorTest {
             Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
             ValidationGateName.BASIC
         );
-        new ObjectMapper().writeValue(source.resolve("pipeline.json").toFile(), repositoryConfiguration);
+        new ObjectMapper().writeValue(ddi25Source.resolve("pipeline.json").toFile(), repositoryConfiguration);
 
         assertDoesNotThrow(() -> Validator.main(new String[]{
             source.toString(),
@@ -137,11 +143,20 @@ class ValidatorTest {
         }));
 
         // Assert that files were copied
-        assertThat(destination)
+        assertThat(destination.resolve("ddi_2_5"))
             // valid.xml and pid.xml are valid
             .isDirectoryContaining("glob:**/valid.xml")
             .isDirectoryContaining("glob:**/pid.xml")
             // invalid.xml is invalid, and shouldn't be copied
             .isDirectoryNotContaining("glob:**/invalid.xml");
+    }
+
+    @Test
+    void shouldHandleMissingDirectory() throws SAXException {
+        var objectMapper = new ObjectMapper();
+        var validator = new Validator(configuration, objectMapper);
+        var directoryWalker = new Validator.DirectoryWalker(objectMapper, validator, "");
+
+        assertThatNoException().isThrownBy(() -> directoryWalker.walkDirectory(Path.of("directory/does/not/exist")));
     }
 }

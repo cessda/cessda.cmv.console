@@ -277,8 +277,7 @@ public class Validator {
         log.info("{}: Performing validation.", value(REPO_NAME, repo.code()));
 
         // Create a stream of all XML files in the repository directory
-        try (var sourceFilesStream = Files.newDirectoryStream(repoPath, Validator::xmlPathFilter)
-        ) {
+        try (var sourceFilesStream = Files.newDirectoryStream(repoPath, Validator::xmlPathFilter)) {
 
 
             var profile = repo.profile();
@@ -434,7 +433,7 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}{}{}{}.",
+            log.debug("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
@@ -534,7 +533,7 @@ public class Validator {
         log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), file, e.toString());
     }
 
-    private static boolean xmlPathFilter(Path entry) {
+    static boolean xmlPathFilter(Path entry) {
         return FilenameUtils.isExtension(entry.toString(), "xml");
     }
 
