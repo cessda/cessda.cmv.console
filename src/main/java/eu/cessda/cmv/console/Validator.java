@@ -433,7 +433,7 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.debug("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}{}{}{}.",
+            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}{}{}{}.",
                 value(REPO_NAME, repo.code()),
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
