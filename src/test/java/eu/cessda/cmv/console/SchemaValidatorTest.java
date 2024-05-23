@@ -41,7 +41,7 @@ class SchemaValidatorTest {
     @Test
     void shouldValidateOAIDocument() throws IOException, SAXException {
         // Load a valid DDI document.
-        var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/oai/valid_oai.xml");
+        var validDDIDocument = this.getClass().getResourceAsStream("/ddi_2_5/valid_oai.xml");
 
         var result = new SchemaValidator().getSchemaViolations(validDDIDocument);
 
