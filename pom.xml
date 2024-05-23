@@ -174,9 +174,6 @@
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.4.2</version>
                 <configuration>
-                    <from>
-                        <image>openjdk:17-jdk-slim</image>
-                    </from>
                     <to>
                         <image>cessda/${project.artifactId}:${project.version}</image>
                     </to>
