@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [3.6.0] - 2024-06-18
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11915471.svg)](https://doi.org/10.5281/zenodo.11915471)
+
+### Added
+
+* Report details about valid persistent identifiers in addition to invalid persistent identifiers ([#635](https://github.com/cessda/cessda.cdc.versions/issues/635))
+
+### Changed
+
+* Updated OpenJDK to version 21 ([#659](https://github.com/cessda/cessda.cdc.versions/issues/659))
+* Updated CMV Core to version 3.0.0 ([PR-72](https://github.com/cessda/cessda.cmv.console/pull/72))
+
+### Fixed
+
+* Fixed validations failing when files are deleted from the validation directory ([PR-77](https://github.com/cessda/cessda.cmv.console/pull/77))
+
 ## [3.4.0] - 2023-08-29
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8277085.svg)](https://doi.org/10.5281/zenodo.8277085)
@@ -136,8 +153,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Log each record separately.
 - Remove CMV profile.
 
+[3.6.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.6.0
+[3.4.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.4.0
 [3.3.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.3.0
-
 [3.2.1]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.2.1
 [3.1.1]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.1.1
 [2.0.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/2.0.0
