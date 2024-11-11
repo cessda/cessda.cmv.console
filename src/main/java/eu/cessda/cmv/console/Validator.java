@@ -160,8 +160,7 @@ public class Validator {
                     } else if (entry.getFileName().equals(Path.of("pipeline.json"))) {
 
                         // Start a validation
-                        var validationExecution = parseRepositoryConfiguration(entry);
-                        validationOperations.add(validationExecution);
+                        parseRepositoryConfiguration(entry);
 
                     }
                 }
@@ -172,16 +171,15 @@ public class Validator {
             return validationOperations;
         }
 
-        private CompletableFuture<Void> parseRepositoryConfiguration(Path entry) {
+        private void parseRepositoryConfiguration(Path entry) {
             // Parse the repository information and start a validation
             try (var inputStream = Files.newInputStream(entry)) {
                 var repository = objectMapper.readValue(inputStream, Repository.class);
-                return CompletableFuture.runAsync(() -> validator.validateRepository(entry.getParent(), repository, timestamp), executor);
+                validator.validateRepository(entry.getParent(), repository, timestamp);
             } catch (IOException e) {
 
                 // Failed to start validation, log and return an empty future
                 log.error("Couldn't load pipeline configuration at {}: {}", entry, e.toString());
-                return CompletableFuture.completedFuture(null);
             }
         }
     }
