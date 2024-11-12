@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [3.7.0] - 2024-11-12
+
+### Fixed
+
+* Fix validations failing due to OOM errors
+
 ## [3.6.0] - 2024-06-18
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11915471.svg)](https://doi.org/10.5281/zenodo.11915471)
