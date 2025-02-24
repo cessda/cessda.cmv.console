@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [3.8.0] - 2025-02-25
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14916314.svg)](https://doi.org/10.5281/zenodo.14916314)
+
+This release updates CMV Core to version 4.0.0. This is a major release with significant functional changes. See <https://github.com/cessda/cessda.cmv.core/releases/tag/4.0.0> for details.
+
 ## [3.7.0] - 2024-11-12
 
 ### Fixed
@@ -159,6 +165,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Log each record separately.
 - Remove CMV profile.
 
+[3.8.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.8.0
+[3.7.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.7.0
 [3.6.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.6.0
 [3.4.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.4.0
 [3.3.0]: https://github.com/cessda/cessda.cmv.console/releases/tag/3.3.0
