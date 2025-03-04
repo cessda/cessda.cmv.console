@@ -316,16 +316,15 @@ public class Validator {
         // Create a stream of all XML files in the repository directory
         try (var sourceFilesStream = Files.newDirectoryStream(repoPath, Validator::xmlPathFilter)) {
 
-
-            var profile = repo.profile();
-
             var recordCounter = new AtomicInteger();
             var invalidRecordsCounter = new AtomicInteger();
 
             // Each validation is scheduled to run asynchronously whilst files are being discovered.
             var futures = StreamSupport.stream(sourceFilesStream.spliterator(), false)
                 .map(file -> CompletableFuture.supplyAsync(() -> {
-                        return validateFile(repo, timestamp, file, recordCounter, profile, invalidRecordsCounter);
+                        // Configure the MDC context
+                        configureMDC(timestamp);
+                        return validateFile(repo, file, recordCounter, invalidRecordsCounter);
                     },
                 executor
             )).toList();
@@ -347,7 +346,7 @@ public class Validator {
 
             log.info("{}: {}: Validated {} records, {} invalid",
                 value(REPO_NAME, repo.code()),
-                value("profile_name", profile),
+                value("profile_name", repo.profile()),
                 value("validated_records", recordCounter),
                 value("invalid_records", invalidRecordsCounter)
             );
@@ -356,28 +355,37 @@ public class Validator {
         }
     }
 
-    private Path validateFile(Repository repo, String timestamp, Path file, AtomicInteger recordCounter, URI profile, AtomicInteger invalidRecordsCounter) {
-        // Configure the MDC context
-        configureMDC(timestamp);
-
-        // Increment the amount of records validated
-        recordCounter.incrementAndGet();
+    /**
+     * Validate a document.
+     *
+     * @param repo the source repository.
+     * @param file the document.
+     * @param recordCounter total records (both valid and invalid).
+     * @param invalidRecordsCounter total invalid records.
+     * @return the document path if the document should be copied, or {@code null} if not.
+     */
+    private Path validateFile(Repository repo, Path file, AtomicInteger recordCounter, AtomicInteger invalidRecordsCounter) {
 
         // Validate the file
         try {
-            // Derive the identifier from the file name
-            var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
-
             // Validate the document
-            var report = validateDocuments(file, repo.ddiVersion(), profile, repo.validationGate());
+            var report = validateDocuments(file, repo.ddiVersion(), repo.profile(), repo.validationGate());
 
+            if (report.state() == State.SKIP) {
+                return null;
+            }
+
+            // Increment the amount of records validated
+            recordCounter.incrementAndGet();
 
             // Report any errors
-            if (!report.state().equals(State.SKIP) &&
-                    (!report.schemaViolations().isEmpty()
-                    || !report.report().getConstraintViolations().isEmpty()
-                    || (report.pidValidationResult() != null && !report.pidValidationResult().valid()))) {
-                reportViolations(repo, profile, recordIdentifier, report);
+            if (!report.schemaViolations().isEmpty()
+                || !report.report().getConstraintViolations().isEmpty()
+                || (report.pidValidationResult() != null && !report.pidValidationResult().valid())
+            ) {
+                // Derive the identifier from the file name
+                var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
+                reportViolations(repo, recordIdentifier, report);
             }
 
             // Only constraint violations block copying
@@ -385,17 +393,17 @@ public class Validator {
                 case VALID -> {
                     if (configuration.destinationDirectory() != null) {
                         return copyToDestination(file);
-                    } else {
-                        return null;
                     }
                 }
                 case INVALID -> invalidRecordsCounter.incrementAndGet();
-                case SKIP -> {/* do nothing */}
             }
 
         } catch (NotDocumentException | IOException | SAXException | OutOfMemoryError e) {
             // Handle unexpected exceptions and out of memory errors
             log.error("{}: Validation of {} failed", value(REPO_NAME, repo.code()), file, e);
+
+            // Increment counters
+            recordCounter.incrementAndGet();
             invalidRecordsCounter.incrementAndGet();
         }
 
@@ -412,7 +420,7 @@ public class Validator {
      * @param recordIdentifier the OAI-PMH record identifier.
      * @param report           the validation report.
      */
-    private void reportViolations(Repository repo, URI profile, String recordIdentifier, ValidationResults report) {
+    private void reportViolations(Repository repo, String recordIdentifier, ValidationResults report) {
         try {
             String cdcIdentifier;
 
@@ -471,7 +479,7 @@ public class Validator {
                 schemaViolations.size(),
                 constraintViolations.size(),
                 value("valid_pids", validPids),
-                keyValue("profile_name", profile, ""),
+                keyValue("profile_name", repo.profile(), ""),
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, ""),
