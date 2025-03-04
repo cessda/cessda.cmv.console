@@ -364,6 +364,7 @@ public class Validator {
      * @param invalidRecordsCounter total invalid records.
      * @return the document path if the document should be copied, or {@code null} if not.
      */
+    @SuppressWarnings("ErrorNotRethrown")
     private Path validateFile(Repository repo, Path file, AtomicInteger recordCounter, AtomicInteger invalidRecordsCounter) {
 
         // Validate the file
@@ -416,10 +417,10 @@ public class Validator {
      * Log schema and constraint violations.
      *
      * @param repo             the repository.
-     * @param profile          the CMV profile used.
      * @param recordIdentifier the OAI-PMH record identifier.
      * @param report           the validation report.
      */
+    @SuppressWarnings("ErrorNotRethrown")
     private void reportViolations(Repository repo, String recordIdentifier, ValidationResults report) {
         try {
             String cdcIdentifier;
@@ -436,7 +437,7 @@ public class Validator {
                 cdcIdentifier = null;
             }
 
-            var validPids = report.pidValidationResult().valid();
+            var validPIDs = report.pidValidationResult().valid();
 
             // Persistent identifier report
             var validPIDURIs = new ArrayList<String>();
@@ -478,7 +479,7 @@ public class Validator {
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
                 constraintViolations.size(),
-                value("valid_pids", validPids),
+                value("valid_pids", validPIDs),
                 keyValue("profile_name", repo.profile(), ""),
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
