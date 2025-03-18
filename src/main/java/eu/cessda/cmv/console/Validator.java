@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static eu.cessda.cmv.console.ValidationResults.EMPTY_VALIDATION_REPORT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -64,7 +65,6 @@ public class Validator {
     private static final String OAI_RECORD = "oai_record";
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
 
-    private static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
 
     // Executor for validations
@@ -199,18 +199,24 @@ public class Validator {
     ValidationResults validateDocuments(
         Path documentPath, DDIVersion ddiVersion, URI profile, ValidationGateName validationGate
     ) throws IOException, SAXException, NotDocumentException {
+        State validationState = State.VALID;
+
         var buffer = new ByteArrayInputStream(Files.readAllBytes(documentPath));
 
-        // Validate against XML schema if configured
+        // Validate against XML schema, parse to DOM document
         log.debug("Validating {} against XML schema", documentPath);
         var schemaValidatorResult = schemaValidator.getSchemaViolations(buffer);
+
+        // Reset the buffer
+        buffer.reset();
 
         // Extract the request URL from the document
         var requestURL = extractURL(schemaValidatorResult.document());
 
-
-        // Reset the buffer
-        buffer.reset();
+        // Determine if this is a deleted record, skip if so
+        if (isDeletedRecord(schemaValidatorResult.document())) {
+            return new ValidationResults(State.SKIP, requestURL);
+        }
 
         // Validate persistent identifiers
         PIDValidationResult pidValidationResult;
@@ -221,20 +227,22 @@ public class Validator {
             log.error("PID validation of {} failed: {}", documentPath, e.toString());
         }
 
-        // Reset the buffer
-        buffer.reset();
 
         // Validate against CMV profile
         final ValidationReport validationReport;
         if (validationGate != null && profile != null) {
             log.debug("Validating {} against CMV profile {}", documentPath, profile);
             validationReport = profileValidator.validateAgainstProfile(buffer, profile, validationGate);
+            if (!validationReport.getConstraintViolations().isEmpty()) {
+                validationState = State.INVALID;
+            }
         } else {
             log.debug("CMV profile validation disabled for {}", documentPath);
             validationReport = EMPTY_VALIDATION_REPORT;
         }
 
         return new ValidationResults(
+            validationState,
             requestURL,
             schemaValidatorResult.schemaViolations(),
             pidValidationResult,
@@ -242,12 +250,34 @@ public class Validator {
         );
     }
 
+    private boolean isDeletedRecord(Document document) {
+        var documentElement = document.getDocumentElement();
+        if (OAI_NAMESPACE_URI.equals(documentElement.getNamespaceURI())) {
+
+            var getRecord = getElementByTagName(documentElement, "GetRecord");
+            if (getRecord != null) {
+
+                var record = getElementByTagName(getRecord, "record");
+                if (record != null) {
+
+                    var header = getElementByTagName(record, "header");
+                    if (header != null) {
+
+                        var status = header.getAttribute("status");
+                        return "deleted".equalsIgnoreCase(status);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     static URI extractURL(Document document) {
         // Only attempt extraction if the document element namespace is an OAI-PMH response
         if (OAI_NAMESPACE_URI.equals(document.getDocumentElement().getNamespaceURI())) {
-            var requestElements = document.getDocumentElement().getElementsByTagNameNS(OAI_NAMESPACE_URI, "request");
-            if (requestElements.getLength() > 0) {
-                var requestElement = (Element) requestElements.item(0);
+            var requestElement = getElementByTagName(document.getDocumentElement(), "request");
+            if (requestElement != null) {
                 try {
                     return new URI(requestElement.getTextContent().trim());
                 } catch (URISyntaxException e) {
@@ -257,6 +287,15 @@ public class Validator {
         }
 
         return null;
+    }
+
+    private static Element getElementByTagName(Element sourceElement, String localName) {
+        var elements = sourceElement.getElementsByTagNameNS(OAI_NAMESPACE_URI, localName);
+        if (elements.getLength() != 0) {
+            return (Element) elements.item(0);
+        } else {
+            return null;
+        }
     }
 
     private static void configureMDC(String timestamp) {
@@ -277,34 +316,16 @@ public class Validator {
         // Create a stream of all XML files in the repository directory
         try (var sourceFilesStream = Files.newDirectoryStream(repoPath, Validator::xmlPathFilter)) {
 
-
-            var profile = repo.profile();
-
             var recordCounter = new AtomicInteger();
             var invalidRecordsCounter = new AtomicInteger();
 
             // Each validation is scheduled to run asynchronously whilst files are being discovered.
             var futures = StreamSupport.stream(sourceFilesStream.spliterator(), false)
                 .map(file -> CompletableFuture.supplyAsync(() -> {
-                    // Configure the MDC context
-                    configureMDC(timestamp);
-
-                    // Increment the amount of records validated
-                    recordCounter.incrementAndGet();
-
-                    // Validate the file
-                    var valid = validateFile(repo, file, profile);
-                    if (valid) {
-                        if (configuration.destinationDirectory() != null) {
-                            return copyToDestination(file);
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        invalidRecordsCounter.incrementAndGet();
-                        return null;
-                    }
-                },
+                        // Configure the MDC context
+                        configureMDC(timestamp);
+                        return validateFile(repo, file, recordCounter, invalidRecordsCounter);
+                    },
                 executor
             )).toList();
 
@@ -325,7 +346,7 @@ public class Validator {
 
             log.info("{}: {}: Validated {} records, {} invalid",
                 value(REPO_NAME, repo.code()),
-                value("profile_name", profile),
+                value("profile_name", repo.profile()),
                 value("validated_records", recordCounter),
                 value("invalid_records", invalidRecordsCounter)
             );
@@ -335,38 +356,60 @@ public class Validator {
     }
 
     /**
-     * Validate the given file using the profile specified.
+     * Validate a document.
      *
-     * @param repo                  the repository the file originated from.
-     * @param file                  the file to validate.
-     * @param profile               the profile to validate against.
-     * @return true if the file was valid, false if validation failed
+     * @param repo the source repository.
+     * @param file the document.
+     * @param recordCounter total records (both valid and invalid).
+     * @param invalidRecordsCounter total invalid records.
+     * @return the document path if the document should be copied, or {@code null} if not.
      */
-    private boolean validateFile(Repository repo, Path file, URI profile) {
-        try {
+    @SuppressWarnings("ErrorNotRethrown")
+    private Path validateFile(Repository repo, Path file, AtomicInteger recordCounter, AtomicInteger invalidRecordsCounter) {
 
-            var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
-            var report = validateDocuments(file, repo.ddiVersion(), profile, repo.validationGate());
+        // Validate the file
+        try {
+            // Validate the document
+            var report = validateDocuments(file, repo.ddiVersion(), repo.profile(), repo.validationGate());
+
+            if (report.state() == State.SKIP) {
+                return null;
+            }
+
+            // Increment the amount of records validated
+            recordCounter.incrementAndGet();
 
             // Report any errors
             if (!report.schemaViolations().isEmpty()
                 || !report.report().getConstraintViolations().isEmpty()
                 || (report.pidValidationResult() != null && !report.pidValidationResult().valid())
             ) {
-                reportViolations(repo, profile, recordIdentifier, report);
+                // Derive the identifier from the file name
+                var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
+                reportViolations(repo, recordIdentifier, report);
             }
 
             // Only constraint violations block copying
-            if (report.report().getConstraintViolations().isEmpty()) {
-                return true;
+            switch (report.state()) {
+                case VALID -> {
+                    if (configuration.destinationDirectory() != null) {
+                        return copyToDestination(file);
+                    }
+                }
+                case INVALID -> invalidRecordsCounter.incrementAndGet();
             }
+
         } catch (NotDocumentException | IOException | SAXException | OutOfMemoryError e) {
             // Handle unexpected exceptions and out of memory errors
             log.error("{}: Validation of {} failed", value(REPO_NAME, repo.code()), file, e);
+
+            // Increment counters
+            recordCounter.incrementAndGet();
+            invalidRecordsCounter.incrementAndGet();
         }
 
-        // Either invalid, or an error occurred
-        return false;
+        // Either invalid, deleted, or an error occurred
+        return null;
     }
 
 
@@ -374,15 +417,15 @@ public class Validator {
      * Log schema and constraint violations.
      *
      * @param repo             the repository.
-     * @param profile          the CMV profile used.
      * @param recordIdentifier the OAI-PMH record identifier.
      * @param report           the validation report.
      */
-    private void reportViolations(Repository repo, URI profile, String recordIdentifier, ValidationResults report) {
+    @SuppressWarnings("ErrorNotRethrown")
+    private void reportViolations(Repository repo, String recordIdentifier, ValidationResults report) {
         try {
             String cdcIdentifier;
 
-            var repoURL = report.repoURL();
+            var repoURL = report.documentURL();
             if (repoURL == null) {
                 repoURL = repo.url();
             }
@@ -394,7 +437,7 @@ public class Validator {
                 cdcIdentifier = null;
             }
 
-            var validPids = report.pidValidationResult().valid();
+            var validPIDs = report.pidValidationResult().valid();
 
             // Persistent identifier report
             var validPIDURIs = new ArrayList<String>();
@@ -436,8 +479,8 @@ public class Validator {
                 value(OAI_RECORD, recordIdentifier),
                 schemaViolations.size(),
                 constraintViolations.size(),
-                value("valid_pids", validPids),
-                keyValue("profile_name", profile, ""),
+                value("valid_pids", validPIDs),
+                keyValue("profile_name", repo.profile(), ""),
                 keyValue("validation_gate", repo.validationGate(), ""),
                 keyValue("schema_violations", schemaViolationsString, ""),
                 keyValue("validation_results", constraintViolationsString, ""),
