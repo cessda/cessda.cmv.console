@@ -19,11 +19,21 @@ import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.xml.sax.SAXParseException;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
+import static eu.cessda.cmv.console.PIDValidationResult.EMPTY_PID_REPORT;
+
 record ValidationResults(
-    URI repoURL,
+    State state,
+    URI documentURL,
     List<SAXParseException> schemaViolations,
     PIDValidationResult pidValidationResult,
-    ValidationReport report) {
+    ValidationReport report
+) {
+    static final ValidationReport EMPTY_VALIDATION_REPORT = new ValidationReport();
+
+    ValidationResults(State state, URI documentURL) {
+        this(state, documentURL, Collections.emptyList(), EMPTY_PID_REPORT, EMPTY_VALIDATION_REPORT);
+    }
 }
