@@ -159,4 +159,19 @@ class ValidatorTest {
 
         assertThatNoException().isThrownBy(() -> directoryWalker.walkDirectory(Path.of("directory/does/not/exist")));
     }
+
+    @Test
+    void shouldIgnoreDeletedRecords() throws SAXException, IOException, NotDocumentException, URISyntaxException {
+        var validator = new Validator(configuration, new ObjectMapper());
+
+        var document = Path.of(Objects.requireNonNull(this.getClass().getResource("/oai-pmh/deleted.xml")).toURI());
+        var validationResultsEntry = validator.validateDocuments(
+            document,
+            DDIVersion.DDI_2_5,
+            null,
+            null
+        );
+
+        assertThat(validationResultsEntry.state()).isEqualTo(State.SKIP);
+    }
 }

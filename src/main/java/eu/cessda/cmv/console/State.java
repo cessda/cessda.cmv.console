@@ -15,9 +15,8 @@
  */
 package eu.cessda.cmv.console;
 
-import java.util.Collections;
-import java.util.List;
-
-record PIDValidationResult(boolean valid, List<PID> validPIDs, List<PID> invalidPIDs) {
-    static PIDValidationResult EMPTY_PID_REPORT = new PIDValidationResult(false, Collections.emptyList(), Collections.emptyList());
+public enum State {
+    VALID,
+    INVALID,
+    SKIP
 }
