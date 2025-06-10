@@ -21,7 +21,7 @@
 
     <groupId>eu.cessda.cdc</groupId>
     <artifactId>validator</artifactId>
-    <version>3.8.0</version>
+    <version>4.0.0</version>
     <name>CESSDA Data Catalogue: Validator</name>
     <url>https://datacatalogue.cessda.eu/</url>
     <inceptionYear>2021</inceptionYear>
