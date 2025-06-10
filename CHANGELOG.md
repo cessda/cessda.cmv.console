@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - *Fixed (for any bug fixes)*
 - *Security (in case of vulnerabilities)*
 
+## [4.0.0] - 2025-06-16
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15630785.svg)](https://doi.org/10.5281/zenodo.15630785)
+
+### Changed
+
+- Skip validating records marked as deleted in OAI-PMH responses ([#679](https://github.com/cessda/cessda.cdc.versions/679))
+- Use the system property `logging.json` to control JSON logging ([PR-135](https://github.com/cessda/cessda.cmv.console/pull/135))
+
 ## [3.8.0] - 2025-02-25
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14916314.svg)](https://doi.org/10.5281/zenodo.14916314)
