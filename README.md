@@ -1,21 +1,9 @@
-[![SQAaaS badge](https://github.com/EOSC-synergy/SQAaaS/raw/master/badges/badges_150x116/badge_software_silver.png)](https://api.eu.badgr.io/public/assertions/9J5JLuvIS5qScYe7-5cNuQ "SQAaaS silver badge achieved")
-
-[![SQAaaS badge shields.io](https://img.shields.io/badge/sqaaas%20software-silver-lightgrey)](https://api.eu.badgr.io/public/assertions/9J5JLuvIS5qScYe7-5cNuQ "SQAaaS silver badge achieved")
+# CESSDA Metadata Validator: Command Line Runner
 
 [![Build Status](https://jenkins.cessda.eu/buildStatus/icon?job=cessda.cmv.console%2Fmain)](https://jenkins.cessda.eu/job/cessda.cmv.console/job/main/)
-[![Bugs](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=bugs)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Code Smells](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=code_smells)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Coverage](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=coverage)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Duplicated Lines (%)](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=duplicated_lines_density)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Lines of Code](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=ncloc)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Maintainability Rating](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=sqale_rating)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
 [![Quality Gate Status](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=alert_status)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Reliability Rating](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=reliability_rating)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Security Rating](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=security_rating)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Technical Debt](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=sqale_index)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-[![Vulnerabilities](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=vulnerabilities)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
-
-# CESSDA Metadata Validator: Command Line Runner
+[![Coverage](https://sonarqube.cessda.eu/api/project_badges/measure?project=eu.cessda.cmv%3Acmv-console&metric=coverage)](https://sonarqube.cessda.eu/dashboard?id=eu.cessda.cmv%3Acmv-console)
+[![SQAaaS badge shields.io](https://img.shields.io/badge/sqaaas%20software-silver-lightgrey)](https://api.eu.badgr.io/public/assertions/8SNeVp5IRnuOh-3slKwOMg "SQAaaS silver badge achieved")
 
 This repository contains the source code for a command line application of the CESSDA Metadata Validator.
 
@@ -51,13 +39,13 @@ This project uses the standard Maven project structure.
 
 Several frameworks are used in this application.
 
-| Framework/Technology                               | Description                                               |
-| -------------------------------------------------- | --------------------------------------------------------- |
-| [CESSDA Metadata Validator](https://cmv.cessda.eu) | Validates XMLs according to the CMM                       | 
-| [Jib](https://github.com/GoogleContainerTools/jib) | Java Docker/OCI image builder                             |
-| [Jackson](https://github.com/FasterXML/jackson)    | JSON/YAML Serializer/Deserializer                         |
-| [logstash-logback-encoder](https://github.com/logstash/logstash-logback-encoder/) | JSON Encoder for Logback   |
-| [Apache Commons IO](https://commons.apache.org/proper/commons-io/) | Library of utilities for IO functionality |
+| Framework/Technology                                                              | Description                               |
+|-----------------------------------------------------------------------------------|-------------------------------------------|
+| [CESSDA Metadata Validator](https://cmv.cessda.eu)                                | Validates XMLs according to the CMM       | 
+| [Jib](https://github.com/GoogleContainerTools/jib)                                | Java Docker/OCI image builder             |
+| [Jackson](https://github.com/FasterXML/jackson)                                   | JSON/YAML Serializer/Deserializer         |
+| [logstash-logback-encoder](https://github.com/logstash/logstash-logback-encoder/) | JSON Encoder for Logback                  |
+| [Apache Commons IO](https://commons.apache.org/proper/commons-io/)                | Library of utilities for IO functionality |
 
 ## Configuration
 
