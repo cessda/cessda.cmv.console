@@ -55,6 +55,23 @@ enum DDIVersion {
         DDIVersion::getDDI25PID
     );
 
+    static final Map<String, DDIVersion> namespaceMap = Map.of(
+            "ddi:instance:3_3", DDI_3_3,
+            "ddi:instance:3_2", DDI_3_2,
+            "ddi:codebook:2_5", DDI_2_5,
+            "http://www.icpsr.umich.edu/DDI", NESSTAR
+    );
+
+    private final NamespaceContext namespaceContext;
+    private final String pidXPath;
+    private final Function<Node, PID> getPid;
+
+    DDIVersion(NamespaceContext namespaceContext, String pidXPath, Function<Node, PID> getPid) {
+        this.namespaceContext = namespaceContext;
+        this.pidXPath = pidXPath;
+        this.getPid = getPid;
+    }
+
     private static PID getDDILifecyclePID(Node node) {
         String agency = null;
         String uri = null;
@@ -76,16 +93,6 @@ enum DDIVersion {
         return new PID(agency, uri, EnumSet.noneOf(PID.State.class));
     }
 
-    private final NamespaceContext namespaceContext;
-    private final String pidXPath;
-    private final Function<Node, PID> getPid;
-
-    DDIVersion(NamespaceContext namespaceContext, String pidXPath, Function<Node, PID> getPid) {
-        this.namespaceContext = namespaceContext;
-        this.pidXPath = pidXPath;
-        this.getPid = getPid;
-    }
-
     private static NamespaceContext buildContext(Map<String, String> namespaces) {
         return new NamespaceContext() {
             @Override
@@ -103,6 +110,10 @@ enum DDIVersion {
                 return null;
             }
         };
+    }
+
+    static DDIVersion fromNamespace(String namespaceURI) {
+        return namespaceMap.get(namespaceURI);
     }
 
     private static PID getDDI25PID(Node node) {

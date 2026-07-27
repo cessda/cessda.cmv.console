@@ -32,7 +32,7 @@ pipeline {
 		stage('Pull SDK Docker Image') {
 		    agent {
 		        docker {
-                    image 'eclipse-temurin:21'
+                    image 'eclipse-temurin:25'
                     reuseNode true
                 }
             }

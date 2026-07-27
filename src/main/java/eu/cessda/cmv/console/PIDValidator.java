@@ -20,16 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 @SuppressWarnings("java:S5164")
 class PIDValidator {
@@ -38,15 +32,26 @@ class PIDValidator {
     private static final Set<String> ALLOWED_AGENCY_VALUES = Set.of("ark", "doi", "handle", "urn");
     private static final EnumSet<PID.State> PID_STATES = EnumSet.allOf(PID.State.class);
 
-    private final ThreadLocal<XPath> xpathThreadLocal = ThreadLocal.withInitial(() -> XPathFactory.newDefaultInstance().newXPath());
+    private final ThreadLocal<XPath> xpathThreadLocal = ThreadLocal.withInitial(() -> XPathFactory.newInstance().newXPath());
+    private final ThreadLocal<Map<String, XPathExpression>> xpathExpressionMapThreadLocal = ThreadLocal.withInitial(HashMap::new);
 
     PIDValidationResult validatePIDs(Document document, DDIVersion xPathContext) throws XPathExpressionException {
 
-        // Set namespace context
-        var xpath = xpathThreadLocal.get();
-        xpath.setNamespaceContext(xPathContext.getNamespaceContext());
+        var xPathExpressionMap = xpathExpressionMapThreadLocal.get();
+        var xPathExpression = xPathExpressionMap.get(xPathContext.getXPath());
 
-        var iDNoElement = (NodeList) xpath.compile(xPathContext.getXPath()).evaluate(document, XPathConstants.NODESET);
+        // Compile XPath if necessary
+        if (xPathExpression == null) {
+            // Set namespace context
+            var xpath = xpathThreadLocal.get();
+            xpath.setNamespaceContext(xPathContext.getNamespaceContext());
+
+            // Compile XPath
+            xPathExpression = xpath.compile(xPathContext.getXPath());
+            xPathExpressionMap.put(xPathContext.getXPath(), xPathExpression);
+        }
+
+        var iDNoElement = (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
 
 
         boolean validPids = false;
@@ -76,9 +81,8 @@ class PIDValidator {
                     state.add(PID.State.VALID_URI);
                 }
             } catch (URISyntaxException e) {
-                log.debug("Invalid uri: {}", pidElement.uri());
+                log.debug("Invalid uri: {}", e.getMessage());
             }
-
 
             // Check if an agency attribute is present, and whether it has an allowed value.
             if (pidElement.agency() != null) {
@@ -134,7 +138,7 @@ class PIDValidator {
             for (int i = 1; i < splitPrefix.length; i++) {
                 Integer.parseInt(splitPrefix[1]);
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return false;
         }
 
