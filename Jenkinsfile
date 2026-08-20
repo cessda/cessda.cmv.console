@@ -72,6 +72,7 @@ pipeline {
                 docker {
                     image 'graalvm/native-image-community:25'
                     registryUrl 'https://ghcr.io/'
+                    registryCredentialsId '699b8178-5d52-46a1-aaad-ddb5b0a4069f'
                     reuseNode true
                 }
             }
