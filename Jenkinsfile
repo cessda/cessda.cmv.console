@@ -70,7 +70,8 @@ pipeline {
         stage('Compile Native Image') {
             agent {
                 docker {
-                    image 'container-registry.oracle.com/graalvm/native-image:25'
+                    image 'graalvm/native-image:25'
+                    registryUrl 'https://container-registry.oracle.com/'
                     reuseNode true
                 }
             }
