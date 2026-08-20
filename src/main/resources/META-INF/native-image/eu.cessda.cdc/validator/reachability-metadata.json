@@ -1,0 +1,176 @@
+{
+  "reflection": [
+    {
+      "type": "com.sun.org.apache.xml.internal.utils.FastStringBuffer",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.org.apache.xpath.internal.functions.FuncContains",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "eu.cessda.cmv.console.Repository",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.net.URI",
+            "java.net.URI",
+            "eu.cessda.cmv.core.ValidationGateName"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "eu.cessda.cmv.core.mediatype.validationreport.ConstraintViolation",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ],
+      "allPublicMethods": true
+    },
+    {
+      "type": "eu.cessda.cmv.core.mediatype.validationreport.LocationInfo",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ],
+      "allPublicMethods": true
+    },
+    {
+      "type": "eu.cessda.cmv.core.mediatype.validationreport.ValidationReport",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ],
+      "allPublicMethods": true
+    },
+    {
+      "type": "org.apache.xerces.impl.dv.dtd.DTDDVFactoryImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.xerces.impl.dv.xs.ExtendedSchemaDVFactoryImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.xerces.impl.dv.xs.SchemaDVFactoryImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.apache.xerces.jaxp.DocumentBuilderFactoryImpl"
+    },
+    {
+      "type": "org.apache.xerces.jaxp.SAXParserFactoryImpl"
+    },
+    {
+      "type": "org.apache.xerces.jaxp.validation.XMLSchemaFactory"
+    },
+    {
+      "type": "org.apache.xerces.parsers.XIncludeAwareParserConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.eclipse.persistence.jaxb.JAXBContextFactory",
+      "methods": [
+        {
+          "name": "createContext",
+          "parameterTypes": [
+            "java.lang.Class[]",
+            "java.util.Map"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.gesis.commons.xml.jaxb.moxy.UpperCamelCaseNameTransformer",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.net.www.protocol.http.Handler",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.net.www.protocol.https.Handler",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "glob": "eu/cessda/cmv/core/mediatype/validationreport/jaxb.properties"
+    },
+    {
+      "glob": "logback.xml"
+    },
+    {
+      "glob": "schemas/**/*"
+    },
+    {
+      "bundle": "org.apache.xerces.impl.msg.XMLSchemaMessages"
+    },
+    {
+      "bundle": "org.apache.xerces.impl.xpath.regex.message"
+    },
+    {
+      "bundle": "org.eclipse.persistence.exceptions.i18n.JAXBExceptionResource"
+    },
+    {
+      "bundle": "org.eclipse.persistence.internal.localization.i18n.JAXBLocalizationResource"
+    },
+    {
+      "bundle": "org.eclipse.persistence.internal.localization.i18n.ToStringLocalizationResource"
+    }
+  ]
+}

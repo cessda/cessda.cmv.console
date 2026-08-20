@@ -67,6 +67,17 @@ pipeline {
                 }
             }
         }
+        stage('Compile Native Image') {
+            agent {
+                docker {
+                    image 'container-registry.oracle.com/graalvm/native-image:25'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh "./mvnw -Pnative native:compile -DbuildNumber=${env.BUILD_NUMBER}"
+            }
+        }
 		stage('Build and Push Docker image') {
             steps {
                 sh "gcloud auth configure-docker ${ARTIFACT_REGISTRY_HOST}"
