@@ -81,7 +81,7 @@ pipeline {
                 HOME = "${WORKSPACE_TMP}"
             }
             steps {
-                sh "./mvnw -Pnative native:compile -DbuildNumber=${env.BUILD_NUMBER}"
+                sh "./mvnw -Pnative native:compile-no-fork -DbuildNumber=${env.BUILD_NUMBER}"
             }
         }
 		stage('Build and Push Docker image') {
