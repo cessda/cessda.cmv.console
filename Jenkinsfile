@@ -21,7 +21,7 @@ pipeline {
 	environment {
 		productName = "cdc"
 		componentName = "validator"
-		imageTag = "${DOCKER_ARTIFACT_REGISTRY}/${productName}-${componentName}:${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+		imageTag = "${DOCKER_ARTIFACT_REGISTRY}/${productName}-${componentName}:${env.BRANCH_NAME.replaceAll('[^a-z0-9\\\\.\\\\_\\\\-]', '-')}-${env.BUILD_NUMBER}"
 	}
 
     agent {
