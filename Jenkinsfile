@@ -84,12 +84,14 @@ pipeline {
                 sh "./mvnw -Pnative native:compile-no-fork -DbuildNumber=${env.BUILD_NUMBER}"
             }
         }
-		stage('Build and Push Docker image') {
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${imageTag} ."
+            }
+        }
+		stage('Push Docker image') {
             steps {
                 sh "gcloud auth configure-docker ${ARTIFACT_REGISTRY_HOST}"
-                withMaven {
-                    sh "./mvnw jib:build -Dimage=${imageTag}"
-                }
                 sh "gcloud artifacts docker tags add ${imageTag} ${DOCKER_ARTIFACT_REGISTRY}/${productName}-${componentName}:${env.BRANCH_NAME}-latest"
             }
             when { branch 'main' }
