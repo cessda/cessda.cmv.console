@@ -79,11 +79,13 @@ pipeline {
             steps {
                 sh "./mvnw -Pnative native:compile-no-fork -DbuildNumber=${env.BUILD_NUMBER}"
             }
+            when { branch 'main' }
         }
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${imageTag} ."
             }
+            when { branch 'main' }
         }
 		stage('Push Docker image') {
             steps {
