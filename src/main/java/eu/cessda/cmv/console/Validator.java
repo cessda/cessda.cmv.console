@@ -23,6 +23,7 @@ import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.channels.Channels;
 import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -53,6 +55,8 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
+
+    private static final int MAX_FILE_SIZE_MB = 50;
 
     // Logging constants
     private static final String MDC_KEY = "validator_job";
@@ -196,7 +200,17 @@ public class Validator {
     ) throws IOException, SAXException, NotDocumentException {
         State validationState = State.VALID;
 
-        var buffer = new ByteArrayInputStream(Files.readAllBytes(documentPath));
+        ByteArrayInputStream buffer;
+
+        // Read the file into a buffer
+        try (var channel = Files.newByteChannel(documentPath)) {
+            long fileSize = channel.size();
+            if (fileSize > MAX_FILE_SIZE_MB * (1000 * 1000)) { // 50 MB
+                throw new IOException("File size " + (fileSize / (1000 * 1000)) + " MB is greater than " + MAX_FILE_SIZE_MB + " MB");
+            }
+            var inputStream = Channels.newInputStream(channel);
+            buffer = new ByteArrayInputStream(IOUtils.toByteArray(inputStream, fileSize));
+        }
 
         // Validate against XML schema, parse to DOM document
         log.debug("Validating {} against XML schema", documentPath);
@@ -240,11 +254,11 @@ public class Validator {
         }
 
         return new ValidationResults(
-            validationState,
-            requestURL,
-            schemaValidatorResult.schemaViolations(),
-            pidValidationResult,
-            validationReport
+                validationState,
+                requestURL,
+                schemaValidatorResult.schemaViolations(),
+                pidValidationResult,
+                validationReport
         );
     }
 
@@ -546,7 +560,7 @@ public class Validator {
                     .log("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}.",
                 repo.code(), recordIdentifier, schemaViolations.size(), constraintViolations.size(), validPIDs
             );
-        } catch (JsonProcessingException | OutOfMemoryError e) {
+        } catch (JsonProcessingException e) {
             log.error("{}: Failed to write violation reports for {}.", repo.code(), recordIdentifier, e);
         }
     }
