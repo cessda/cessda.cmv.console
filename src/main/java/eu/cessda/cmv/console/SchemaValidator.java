@@ -38,7 +38,8 @@ class SchemaValidator {
     SchemaValidator() throws SAXException {
         // Find the resources for the XML schemas
         var schemaURLs = new URL[] {
-            this.getClass().getResource("/schemas/codebook/codebook.xsd"),
+            this.getClass().getResource("/schemas/codebook/2.5/codebook.xsd"),
+            this.getClass().getResource("/schemas/codebook/2.6/codebook.xsd"),
             this.getClass().getResource("/schemas/lifecycle/3.2/instance.xsd"),
             this.getClass().getResource("/schemas/lifecycle/3.3/instance.xsd"),
             this.getClass().getResource("/schemas/nesstar/Version1-2-2.xsd"),
@@ -51,7 +52,7 @@ class SchemaValidator {
             .toArray(StreamSource[]::new);
 
         // Construct schema objects from the XML schemas
-        var schema = SchemaFactory.newDefaultInstance().newSchema(sources);
+        var schema = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema").newSchema(sources);
 
         documentBuilderThreadLocal = ThreadLocal.withInitial(() -> {
             try {

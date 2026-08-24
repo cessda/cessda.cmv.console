@@ -54,7 +54,6 @@ class ValidatorTest {
             for (var document : directoryStream) {
                 var validationResultsEntry = validator.validateDocuments(
                     document,
-                    DDIVersion.DDI_2_5,
                     Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
                     ValidationGateName.BASIC
                 );
@@ -80,7 +79,6 @@ class ValidatorTest {
             for (var document : directoryStream) {
                 var validationResultsEntry = validator.validateDocuments(
                     document,
-                    DDIVersion.DDI_2_5,
                     null,
                     null
                 );
@@ -103,7 +101,6 @@ class ValidatorTest {
         var invalidDocument = Path.of(Objects.requireNonNull(this.getClass().getResource("/malformed.xml")).toURI());
         assertThrows(SAXException.class, () -> validator.validateDocuments(
             invalidDocument,
-            DDIVersion.DDI_2_5,
             Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
             ValidationGateName.BASIC)
         );
@@ -130,7 +127,6 @@ class ValidatorTest {
         var repositoryConfiguration = new Repository(
             "test",
             URI.create("http://test/oai"),
-            DDIVersion.DDI_2_5,
             Objects.requireNonNull(this.getClass().getResource("/profiles/cdc-ddi2.5.xml")).toURI(),
             ValidationGateName.BASIC
         );
@@ -167,7 +163,6 @@ class ValidatorTest {
         var document = Path.of(Objects.requireNonNull(this.getClass().getResource("/oai-pmh/deleted.xml")).toURI());
         var validationResultsEntry = validator.validateDocuments(
             document,
-            DDIVersion.DDI_2_5,
             null,
             null
         );

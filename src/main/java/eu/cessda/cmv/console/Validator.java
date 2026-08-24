@@ -41,18 +41,13 @@ import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static eu.cessda.cmv.console.ValidationResults.EMPTY_VALIDATION_REPORT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static net.logstash.logback.argument.StructuredArguments.keyValue;
-import static net.logstash.logback.argument.StructuredArguments.value;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 public class Validator {
@@ -69,7 +64,6 @@ public class Validator {
 
     // Executor for validations
     private static final Executor executor = Executors.newWorkStealingPool();
-
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
@@ -175,7 +169,9 @@ public class Validator {
             // Parse the repository information and start a validation
             try (var inputStream = Files.newInputStream(entry)) {
                 var repository = objectMapper.readValue(inputStream, Repository.class);
-                validator.validateRepository(entry.getParent(), repository, timestamp);
+                try (var _ = MDC.putCloseable(REPO_NAME, repository.code())) {
+                    validator.validateRepository(entry.getParent(), repository, timestamp);
+                }
             } catch (IOException e) {
 
                 // Failed to start validation, log and return an empty future
@@ -188,16 +184,15 @@ public class Validator {
      * Validate the given document using the specified profile and validation gate.
      *
      * @param documentPath   the document to validate.
-     * @param ddiVersion     the DDI version of the document.
      * @param profile        the profile to validate with.
      * @param validationGate the {@link ValidationGateName} to use.
      * @return a {@link Map.Entry} with the key set to the file name, and the value set to the validation results.
      * @throws RuntimeException if an error occurs during the validation.
-     * @throws SAXException     if the document doesn't conform to the DDI schema.
+     * @throws SAXException     if a parsing error occurs when parsing and validating the document.
      * @throws IOException      if an IO error occurred.
      */
     ValidationResults validateDocuments(
-        Path documentPath, DDIVersion ddiVersion, URI profile, ValidationGateName validationGate
+        Path documentPath, URI profile, ValidationGateName validationGate
     ) throws IOException, SAXException, NotDocumentException {
         State validationState = State.VALID;
 
@@ -218,15 +213,18 @@ public class Validator {
             return new ValidationResults(State.SKIP, requestURL);
         }
 
-        // Validate persistent identifiers
-        PIDValidationResult pidValidationResult;
-        try {
-            pidValidationResult = pidValidator.validatePIDs(schemaValidatorResult.document(), ddiVersion);
-        } catch (XPathExpressionException e) {
-            pidValidationResult = null;
-            log.error("PID validation of {} failed: {}", documentPath, e.toString());
-        }
+        // Discover DDI version
+        var ddiVersion = discoverDDIVersion(schemaValidatorResult.document());
 
+        // Validate persistent identifiers
+        PIDValidationResult pidValidationResult = null;
+        if (ddiVersion != null) {
+            try {
+                pidValidationResult = pidValidator.validatePIDs(schemaValidatorResult.document(), ddiVersion);
+            } catch (XPathExpressionException e) {
+                log.error("PID validation of {} failed: {}", documentPath, e.toString());
+            }
+        }
 
         // Validate against CMV profile
         final ValidationReport validationReport;
@@ -250,22 +248,44 @@ public class Validator {
         );
     }
 
-    private boolean isDeletedRecord(Document document) {
+    private static DDIVersion discoverDDIVersion(Document document) {
+        Element metadataElement = null;
+
+        // Is this an OAI-PMH response
+        if (OAI_NAMESPACE_URI.equals(document.getNamespaceURI())) {
+
+            var record = getRecordElement(document);
+            if (record != null) {
+
+                var metadata = getOAIElementByTagName(record, "metadata");
+                if (metadata != null) {
+                    metadataElement = getElementByTagName(metadata, "*", "*");
+                }
+            }
+        } else {
+            metadataElement = document.getDocumentElement();
+        }
+
+        if (metadataElement != null) {
+            var namespaceURI = metadataElement.getNamespaceURI();
+            return DDIVersion.fromNamespace(namespaceURI);
+        }
+
+        return null;
+    }
+
+    private static boolean isDeletedRecord(Document document) {
         var documentElement = document.getDocumentElement();
         if (OAI_NAMESPACE_URI.equals(documentElement.getNamespaceURI())) {
 
-            var getRecord = getElementByTagName(documentElement, "GetRecord");
-            if (getRecord != null) {
+            var record = getRecordElement(document);
+            if (record != null) {
 
-                var record = getElementByTagName(getRecord, "record");
-                if (record != null) {
+                var header = getOAIElementByTagName(record, "header");
+                if (header != null) {
 
-                    var header = getElementByTagName(record, "header");
-                    if (header != null) {
-
-                        var status = header.getAttribute("status");
-                        return "deleted".equalsIgnoreCase(status);
-                    }
+                    var status = header.getAttribute("status");
+                    return "deleted".equalsIgnoreCase(status);
                 }
             }
         }
@@ -273,14 +293,26 @@ public class Validator {
         return false;
     }
 
+    private static Element getRecordElement(Document document) {
+        // Is this an OAI-PMH response
+        var documentElement = document.getDocumentElement();
+
+        var getRecord = getOAIElementByTagName(documentElement, "GetRecord");
+        if (getRecord != null) {
+            return getOAIElementByTagName(getRecord, "record");
+        }
+
+        return null;
+    }
+
     static URI extractURL(Document document) {
         // Only attempt extraction if the document element namespace is an OAI-PMH response
         if (OAI_NAMESPACE_URI.equals(document.getDocumentElement().getNamespaceURI())) {
-            var requestElement = getElementByTagName(document.getDocumentElement(), "request");
+            var requestElement = getOAIElementByTagName(document.getDocumentElement(), "request");
             if (requestElement != null) {
                 try {
                     return new URI(requestElement.getTextContent().trim());
-                } catch (URISyntaxException e) {
+                } catch (URISyntaxException _) {
                     // ignore
                 }
             }
@@ -289,8 +321,12 @@ public class Validator {
         return null;
     }
 
-    private static Element getElementByTagName(Element sourceElement, String localName) {
-        var elements = sourceElement.getElementsByTagNameNS(OAI_NAMESPACE_URI, localName);
+    private static Element getOAIElementByTagName(Element sourceElement, String localName) {
+        return getElementByTagName(sourceElement, OAI_NAMESPACE_URI, localName);
+    }
+
+    private static Element getElementByTagName(Element sourceElement, String namespaceURI, String localName) {
+        var elements = sourceElement.getElementsByTagNameNS(namespaceURI, localName);
         if (elements.getLength() != 0) {
             return (Element) elements.item(0);
         } else {
@@ -311,7 +347,7 @@ public class Validator {
     private void validateRepository(Path repoPath, Repository repo, String timestamp) {
         configureMDC(timestamp);
 
-        log.info("{}: Performing validation.", value(REPO_NAME, repo.code()));
+        log.info("{}: Performing validation.", repo.code());
 
         // Create a stream of all XML files in the repository directory
         try (var sourceFilesStream = Files.newDirectoryStream(repoPath, Validator::xmlPathFilter)) {
@@ -320,38 +356,48 @@ public class Validator {
             var invalidRecordsCounter = new AtomicInteger();
 
             // Each validation is scheduled to run asynchronously whilst files are being discovered.
-            var futures = StreamSupport.stream(sourceFilesStream.spliterator(), false)
-                .map(file -> CompletableFuture.supplyAsync(() -> {
+            var mdc = MDC.getCopyOfContextMap();
+            var futures = new ArrayList<CompletableFuture<Path>>();
+            for (Path path : sourceFilesStream) {
+                var pathFuture = CompletableFuture.supplyAsync(() -> {
                         // Configure the MDC context
-                        configureMDC(timestamp);
-                        return validateFile(repo, file, recordCounter, invalidRecordsCounter);
+                        MDC.setContextMap(mdc);
+                        return validateFile(repo, path, recordCounter, invalidRecordsCounter);
                     },
-                executor
-            )).toList();
+                    executor
+                ).exceptionally(e -> {
+                    log.error("{}: Validation of {} failed", repo.code(), path, e);
+                    return null;
+                });
+                futures.add(pathFuture);
+            }
 
             if (configuration.destinationDirectory() != null) {
                 // Get a HashSet of copied files
-                var copiedFiles = futures.stream()
-                    .map(CompletableFuture::join)
-                    .filter(Objects::nonNull)
-                    .map(Path::getFileName)
-                    .collect(Collectors.toCollection(HashSet::new));
+                var copiedFiles = new HashSet<Path>();
+                for (var future : futures) {
+                    Path file = future.join();
+                    if (file != null) {
+                        copiedFiles.add(file.getFileName());
+                    }
+                }
 
                 // Clean up files in the destination directory.
                 deleteOrphanedRecords(repo, repoPath, copiedFiles);
             } else {
                 // Join all the futures and wait for their completion
-                futures.forEach(CompletableFuture::join);
+                CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
             }
 
-            log.info("{}: {}: Validated {} records, {} invalid",
-                value(REPO_NAME, repo.code()),
-                value("profile_name", repo.profile()),
-                value("validated_records", recordCounter),
-                value("invalid_records", invalidRecordsCounter)
+            log.atInfo()
+                    .addKeyValue("profile_name", repo.profile())
+                    .addKeyValue("validated_records", recordCounter)
+                    .addKeyValue("invalid_records", invalidRecordsCounter)
+                    .log("{}: {}: Validated {} records, {} invalid",
+                 repo.code(), repo.profile(), recordCounter, invalidRecordsCounter
             );
-        } catch (DirectoryIteratorException | IOException | ProfileLoadFailedException | CompletionException e) {
-            log.error("Failed to validate {}: {}", value(REPO_NAME, repo.code()), e.toString());
+        } catch (DirectoryIteratorException | IOException | ProfileLoadFailedException e) {
+            log.error("Failed to validate {}: {}", repo.code(), e.toString());
         }
     }
 
@@ -364,48 +410,50 @@ public class Validator {
      * @param invalidRecordsCounter total invalid records.
      * @return the document path if the document should be copied, or {@code null} if not.
      */
-    @SuppressWarnings("ErrorNotRethrown")
     private Path validateFile(Repository repo, Path file, AtomicInteger recordCounter, AtomicInteger invalidRecordsCounter) {
 
+        // Derive the record identifier from the file name
+        var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
+
         // Validate the file
-        try {
+        try (var _ = MDC.putCloseable(OAI_RECORD, recordIdentifier)) {
             // Validate the document
-            var report = validateDocuments(file, repo.ddiVersion(), repo.profile(), repo.validationGate());
+            var report = validateDocuments(file, repo.profile(), repo.validationGate());
 
             if (report.state() == State.SKIP) {
                 return null;
             }
 
-            // Increment the amount of records validated
-            recordCounter.incrementAndGet();
-
             // Report any errors
-            if (!report.schemaViolations().isEmpty()
-                || !report.report().getConstraintViolations().isEmpty()
-                || (report.pidValidationResult() != null && !report.pidValidationResult().valid())
+            var constraintViolations = report.report().getConstraintViolations();
+            var schemaViolations = report.schemaViolations();
+            var pidValidationResult = report.pidValidationResult();
+
+            if (!schemaViolations.isEmpty()
+                || !constraintViolations.isEmpty()
+                || (pidValidationResult != null && !pidValidationResult.valid())
             ) {
                 // Derive the identifier from the file name
-                var recordIdentifier = URLDecoder.decode(removeExtension(file.getFileName().toString()), UTF_8);
                 reportViolations(repo, recordIdentifier, report);
             }
 
             // Only constraint violations block copying
-            switch (report.state()) {
-                case VALID -> {
-                    if (configuration.destinationDirectory() != null) {
-                        return copyToDestination(file);
-                    }
+            if (report.state() == State.VALID) {
+                if (configuration.destinationDirectory() != null) {
+                    return copyToDestination(file);
                 }
-                case INVALID -> invalidRecordsCounter.incrementAndGet();
+            } else if (report.state() == State.INVALID) {
+                invalidRecordsCounter.incrementAndGet();
             }
 
-        } catch (NotDocumentException | IOException | SAXException | OutOfMemoryError e) {
-            // Handle unexpected exceptions and out of memory errors
-            log.error("{}: Validation of {} failed", value(REPO_NAME, repo.code()), file, e);
+        } catch (NotDocumentException | SAXException | IOException e) {
+            // Handle invalid DDI document
+            log.warn("{}: Validation of {} failed: {}", repo.code(), file, e.toString());
 
             // Increment counters
-            recordCounter.incrementAndGet();
             invalidRecordsCounter.incrementAndGet();
+        } finally {
+            recordCounter.incrementAndGet();
         }
 
         // Either invalid, deleted, or an error occurred
@@ -437,23 +485,33 @@ public class Validator {
                 cdcIdentifier = null;
             }
 
-            var validPIDs = report.pidValidationResult().valid();
+            // PID results
+            boolean validPIDs = false;
+            List<String> validPIDURIs = Collections.emptyList();
+            List<String> validPIDAgency = Collections.emptyList();
+            List<String> invalidPIDAgency = Collections.emptyList();
+            List<String> invalidPIDURIs = Collections.emptyList();
+            List<String> invalidPIDState = Collections.emptyList();
 
-            // Persistent identifier report
-            var validPIDURIs = new ArrayList<String>();
-            var validPIDAgency = new ArrayList<String>();
-            for (var validPID : report.pidValidationResult().validPIDs()) {
-                validPIDAgency.add(validPID.agency());
-                validPIDURIs.add(validPID.uri());
-            }
+            if (report.pidValidationResult() != null) {
+                validPIDs = report.pidValidationResult().valid();
 
-            var invalidPIDAgency = new ArrayList<String>();
-            var invalidPIDURIs = new ArrayList<String>();
-            var invalidPIDState = new ArrayList<String>();
-            for (var invalidPID :  report.pidValidationResult().invalidPIDs()) {
-                invalidPIDAgency.add(invalidPID.agency());
-                invalidPIDURIs.add(invalidPID.uri());
-                invalidPIDState.add(invalidPID.state().toString());
+                // Persistent identifier report
+                validPIDURIs = new ArrayList<>();
+                validPIDAgency = new ArrayList<>();
+                for (var validPID : report.pidValidationResult().validPIDs()) {
+                    validPIDAgency.add(validPID.agency());
+                    validPIDURIs.add(validPID.uri());
+                }
+
+                invalidPIDAgency = new ArrayList<>();
+                invalidPIDURIs = new ArrayList<>();
+                invalidPIDState = new ArrayList<>();
+                for (var invalidPID : report.pidValidationResult().invalidPIDs()) {
+                    invalidPIDAgency.add(invalidPID.agency());
+                    invalidPIDURIs.add(invalidPID.uri());
+                    invalidPIDState.add(invalidPID.state().toString());
+                }
             }
 
             // XSD schema violations
@@ -474,25 +532,22 @@ public class Validator {
                 constraintViolationsString = null;
             }
 
-            log.info("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}{}{}{}{}{}{}{}{}{}{}.",
-                value(REPO_NAME, repo.code()),
-                value(OAI_RECORD, recordIdentifier),
-                schemaViolations.size(),
-                constraintViolations.size(),
-                value("valid_pids", validPIDs),
-                keyValue("profile_name", repo.profile(), ""),
-                keyValue("validation_gate", repo.validationGate(), ""),
-                keyValue("schema_violations", schemaViolationsString, ""),
-                keyValue("validation_results", constraintViolationsString, ""),
-                keyValue("valid_pid_agency", validPIDAgency, ""),
-                keyValue("valid_pid_uri", validPIDURIs, ""),
-                keyValue("invalid_pid_agency", invalidPIDAgency, ""),
-                keyValue("invalid_pid_uri", invalidPIDURIs, ""),
-                keyValue("invalid_pid_state", invalidPIDState, ""),
-                keyValue("cdc_identifier", cdcIdentifier, "")
+            log.atInfo()
+                    .addKeyValue("profile_name", repo.profile())
+                    .addKeyValue("validation_gate", repo.validationGate())
+                    .addKeyValue("schema_violations", schemaViolationsString)
+                    .addKeyValue("validation_results", constraintViolationsString)
+                    .addKeyValue("valid_pid_agency", validPIDAgency)
+                    .addKeyValue("valid_pid_uri", validPIDURIs)
+                    .addKeyValue("invalid_pid_agency", invalidPIDAgency)
+                    .addKeyValue("invalid_pid_uri", invalidPIDURIs)
+                    .addKeyValue("invalid_pid_state", invalidPIDState)
+                    .addKeyValue("cdc_identifier", cdcIdentifier)
+                    .log("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}.",
+                repo.code(), recordIdentifier, schemaViolations.size(), constraintViolations.size(), validPIDs
             );
         } catch (JsonProcessingException | OutOfMemoryError e) {
-            log.error("{}: Failed to write violation reports for {}.", value(REPO_NAME, repo.code()), value(OAI_RECORD, recordIdentifier), e);
+            log.error("{}: Failed to write violation reports for {}.", repo.code(), recordIdentifier, e);
         }
     }
 
@@ -532,9 +587,9 @@ public class Validator {
         DirectoryStream<Path> directoryStream;
         try {
             directoryStream = Files.newDirectoryStream(destinationPath, Validator::xmlPathFilter);
-        } catch (NoSuchFileException e) {
+        } catch (NoSuchFileException _) {
             // Handle the case where the directory cannot be found separately from when individual files cannot be found
-            log.debug("{}: Destination directory \"{}\" not found", value(REPO_NAME, repository.code()), destinationPath);
+            log.debug("{}: Destination directory \"{}\" not found", repository.code(), destinationPath);
             return;
         } catch (IOException e) {
             logCleanupFailure(repository, destinationPath, e);
@@ -564,14 +619,14 @@ public class Validator {
 
         // Log if files are deleted at INFO level, always log at debug
         if (log.isDebugEnabled()) {
-            log.debug(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
+            log.debug(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
         } else if (filesDeleted > 0) {
-            log.info(RECORDS_DELETED_LOG_TEMPLATE, value(REPO_NAME, repository.code()), filesDeleted);
+            log.info(RECORDS_DELETED_LOG_TEMPLATE, repository.code(), filesDeleted);
         }
     }
 
     private static void logCleanupFailure(Repository repository, Path file, IOException e) {
-        log.warn("{}: Couldn't clean up \"{}\": {}", value(REPO_NAME, repository.code()), file, e.toString());
+        log.warn("{}: Couldn't clean up \"{}\": {}", repository.code(), file, e.toString());
     }
 
     static boolean xmlPathFilter(Path entry) {
@@ -584,7 +639,7 @@ public class Validator {
      *
      * @param repositoryPath the path to map, normalised using {@link Path#normalize()}.
      * @return the destination path.
-     * @throws IllegalArgumentException if the path cannot be relativized against the root directory.
+     * @throws IllegalArgumentException if the path cannot be relativised against the root directory.
      */
     private Path getDestinationPath(Path repositoryPath) {
         // Convert the absolute path into a relative path from the root XML directory.

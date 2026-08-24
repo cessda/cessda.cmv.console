@@ -24,7 +24,7 @@ import java.net.URI;
  * A configuration of a remote repository.
  *
  * @param code           the short name of the repository.
- * @param ddiVersion     the DDI version of the metadata.
+ * @param url            the URL of the repository.
  * @param profile        the CMV profile to validate against.
  * @param validationGate the validation gate to use.
  */
@@ -32,7 +32,6 @@ import java.net.URI;
 public record Repository(
     String code,
     URI url,
-    DDIVersion ddiVersion,
     URI profile,
     ValidationGateName validationGate
 ) {
