@@ -97,7 +97,7 @@ pipeline {
 		}
 		stage('Check Requirements and Deployments') {
 			steps {
-				build job: 'cessda.cdc.aggregator.deploy/main', parameters: [string(name: 'cmv', value: "${env.BRANCH_NAME}-${env.BUILD_NUMBER}")], wait: false
+				build job: 'cessda.cdc.aggregator.deploy/main', parameters: [string(name: 'validatorImageTag', value: "${env.BRANCH_NAME}-${env.BUILD_NUMBER}")], wait: false
 			}
             when { branch 'main' }
 		}

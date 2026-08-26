@@ -127,7 +127,7 @@ public class Validator {
 
         // Walk the directories
         var completableFutures = DirectoryWalker.walkDirectory(baseDirectory, objectMapper, validator);
-        completableFutures.forEach(CompletableFuture::join);
+        CompletableFuture.allOf(completableFutures.toArray(CompletableFuture[]::new)).join();
     }
 
     /**
@@ -297,7 +297,6 @@ public class Validator {
     /**
      * Validate all configured repositories.
      */
-    @SuppressWarnings("java:S2629")
     void validateRepository(Path repoPath, Repository repo) {
         log.info("{}: Performing validation.", repo.code());
 

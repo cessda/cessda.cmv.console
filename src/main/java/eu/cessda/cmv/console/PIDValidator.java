@@ -35,20 +35,20 @@ class PIDValidator {
     private final ThreadLocal<XPath> xpathThreadLocal = ThreadLocal.withInitial(() -> XPathFactory.newInstance().newXPath());
     private final ThreadLocal<Map<String, XPathExpression>> xpathExpressionMapThreadLocal = ThreadLocal.withInitial(HashMap::new);
 
-    PIDValidationResult validatePIDs(Document document, DDIVersion xPathContext) throws XPathExpressionException {
+    PIDValidationResult validatePIDs(Document document, DDIVersion ddiVersion) throws XPathExpressionException {
 
         var xPathExpressionMap = xpathExpressionMapThreadLocal.get();
-        var xPathExpression = xPathExpressionMap.get(xPathContext.getXPath());
+        var xPathExpression = xPathExpressionMap.get(ddiVersion.getXPath());
 
         // Compile XPath if necessary
         if (xPathExpression == null) {
             // Set namespace context
             var xpath = xpathThreadLocal.get();
-            xpath.setNamespaceContext(xPathContext.getNamespaceContext());
+            xpath.setNamespaceContext(ddiVersion.getNamespaceContext());
 
             // Compile XPath
-            xPathExpression = xpath.compile(xPathContext.getXPath());
-            xPathExpressionMap.put(xPathContext.getXPath(), xPathExpression);
+            xPathExpression = xpath.compile(ddiVersion.getXPath());
+            xPathExpressionMap.put(ddiVersion.getXPath(), xPathExpression);
         }
 
         var iDNoElement = (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
@@ -64,7 +64,7 @@ class PIDValidator {
             var state = EnumSet.noneOf(PID.State.class);
 
             // Extract persistent identifiers from the element
-            var pidElement = xPathContext.getPID(iDNoElement.item(i));
+            var pidElement = ddiVersion.getPID(iDNoElement.item(i));
 
             // Validate URI and check if the URI is absolute.
             try {
