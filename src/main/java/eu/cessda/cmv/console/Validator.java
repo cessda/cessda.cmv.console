@@ -60,7 +60,7 @@ public class Validator {
 
     // Logging constants
     private static final String MDC_KEY = "validator_job";
-    private static final String REPO_NAME = "repo_name";
+    static final String REPO_NAME = "repo_name";
     private static final String OAI_RECORD = "oai_record";
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
 
@@ -125,63 +125,9 @@ public class Validator {
         // Discover repositories from instances of pipeline.json
         MDC.put(MDC_KEY, timestamp);
 
-        // Initialise the directory walker
-        var walker = new DirectoryWalker(objectMapper, validator, timestamp);
-        var completableFutures = walker.walkDirectory(baseDirectory);
+        // Walk the directories
+        var completableFutures = DirectoryWalker.walkDirectory(baseDirectory, objectMapper, validator);
         completableFutures.forEach(CompletableFuture::join);
-    }
-
-    static class DirectoryWalker {
-
-        private final ObjectMapper objectMapper;
-        private final Validator validator;
-        private final String timestamp;
-
-        DirectoryWalker(ObjectMapper objectMapper, Validator validator, String timestamp) {
-            this.objectMapper = objectMapper;
-            this.validator = validator;
-            this.timestamp = timestamp;
-        }
-
-        List<CompletableFuture<Void>> walkDirectory(Path directory) throws IOException {
-            var validationOperations = new ArrayList<CompletableFuture<Void>>();
-
-            try (var directoryStream = Files.newDirectoryStream(directory)) {
-                // Get entry
-                for (var entry : directoryStream) {
-                    if (Files.isDirectory(entry)) {
-
-                        // Recurse, search the directory
-                        var recursedValidationOperations = walkDirectory(entry);
-                        validationOperations.addAll(recursedValidationOperations);
-
-                    } else if (entry.getFileName().equals(Path.of("pipeline.json"))) {
-
-                        // Start a validation
-                        parseRepositoryConfiguration(entry);
-
-                    }
-                }
-            } catch (DirectoryIteratorException | IOException e) {
-                log.error("Couldn't discover repositories at {}: {}", directory, e.toString());
-            }
-
-            return validationOperations;
-        }
-
-        private void parseRepositoryConfiguration(Path entry) {
-            // Parse the repository information and start a validation
-            try (var inputStream = Files.newInputStream(entry)) {
-                var repository = objectMapper.readValue(inputStream, Repository.class);
-                try (var _ = MDC.putCloseable(REPO_NAME, repository.code())) {
-                    validator.validateRepository(entry.getParent(), repository, timestamp);
-                }
-            } catch (IOException e) {
-
-                // Failed to start validation, log and return an empty future
-                log.error("Couldn't load pipeline configuration at {}: {}", entry, e.toString());
-            }
-        }
     }
 
     /**
@@ -266,8 +212,8 @@ public class Validator {
         Element metadataElement = null;
 
         // Is this an OAI-PMH response
-        if (OAI_NAMESPACE_URI.equals(document.getNamespaceURI())) {
-
+        var documentElement = document.getDocumentElement();
+        if (OAI_NAMESPACE_URI.equals(documentElement.getNamespaceURI())) {
             var record = getRecordElement(document);
             if (record != null) {
 
@@ -277,7 +223,7 @@ public class Validator {
                 }
             }
         } else {
-            metadataElement = document.getDocumentElement();
+            metadataElement = documentElement;
         }
 
         if (metadataElement != null) {
@@ -348,19 +294,11 @@ public class Validator {
         }
     }
 
-    private static void configureMDC(String timestamp) {
-        if (MDC.get(MDC_KEY) == null) {
-            MDC.put(MDC_KEY, timestamp);
-        }
-    }
-
     /**
      * Validate all configured repositories.
      */
     @SuppressWarnings("java:S2629")
-    private void validateRepository(Path repoPath, Repository repo, String timestamp) {
-        configureMDC(timestamp);
-
+    void validateRepository(Path repoPath, Repository repo) {
         log.info("{}: Performing validation.", repo.code());
 
         // Create a stream of all XML files in the repository directory

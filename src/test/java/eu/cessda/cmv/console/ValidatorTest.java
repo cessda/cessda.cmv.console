@@ -151,9 +151,8 @@ class ValidatorTest {
     void shouldHandleMissingDirectory() throws SAXException {
         var objectMapper = new ObjectMapper();
         var validator = new Validator(configuration, objectMapper);
-        var directoryWalker = new Validator.DirectoryWalker(objectMapper, validator, "");
 
-        assertThatNoException().isThrownBy(() -> directoryWalker.walkDirectory(Path.of("directory/does/not/exist")));
+        assertThatNoException().isThrownBy(() -> DirectoryWalker.walkDirectory(Path.of("directory/does/not/exist"), objectMapper, validator));
     }
 
     @Test
