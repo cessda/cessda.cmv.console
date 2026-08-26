@@ -15,8 +15,6 @@
  */
 package eu.cessda.cmv.console;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
 import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
@@ -31,6 +29,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
@@ -420,7 +420,6 @@ public class Validator {
      * @param recordIdentifier the OAI-PMH record identifier.
      * @param report           the validation report.
      */
-    @SuppressWarnings("ErrorNotRethrown")
     private void reportViolations(Repository repo, String recordIdentifier, ValidationResults report) {
         try {
             String cdcIdentifier;
@@ -498,7 +497,7 @@ public class Validator {
                     .log("{}: {}\n{} schema violations\n{} profile violations\nValid PIDs: {}.",
                 repo.code(), recordIdentifier, schemaViolations.size(), constraintViolations.size(), validPIDs
             );
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.error("{}: Failed to write violation reports for {}.", repo.code(), recordIdentifier, e);
         }
     }

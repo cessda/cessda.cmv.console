@@ -15,13 +15,13 @@
  */
 package eu.cessda.cmv.console;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.cessda.cmv.core.NotDocumentException;
 import eu.cessda.cmv.core.ValidationGateName;
 import eu.cessda.cmv.core.mediatype.validationreport.ValidationReport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.SAXException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URI;
