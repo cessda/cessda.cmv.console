@@ -158,6 +158,9 @@
       "glob": "schemas/**/*"
     },
     {
+      "bundle": "com.sun.org.apache.xpath.internal.res.XPATHErrorResources"
+    },
+    {
       "bundle": "org.apache.xerces.impl.msg.XMLSchemaMessages"
     },
     {

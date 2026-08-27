@@ -274,7 +274,7 @@
                             <execution>
                                 <id>build-native</id>
                                 <goals>
-                                    <goal>compile-no-fork</goal>
+                                    <goal>compile</goal>
                                 </goals>
                                 <phase>package</phase>
                             </execution>

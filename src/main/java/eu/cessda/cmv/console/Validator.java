@@ -43,8 +43,6 @@ import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static eu.cessda.cmv.console.ValidationResults.EMPTY_VALIDATION_REPORT;
@@ -56,7 +54,7 @@ public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
 
-    private static final int MAX_FILE_SIZE_MB = 50;
+    private static final int MAX_FILE_SIZE_MB = 10;
 
     // Logging constants
     private static final String MDC_KEY = "validator_job";
@@ -65,9 +63,6 @@ public class Validator {
     private static final String RECORDS_DELETED_LOG_TEMPLATE = "{}: {} orphaned records deleted";
 
     private static final String OAI_NAMESPACE_URI = "http://www.openarchives.org/OAI/2.0/";
-
-    // Executor for validations
-    private static final Executor executor = Executors.newWorkStealingPool();
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
@@ -228,7 +223,9 @@ public class Validator {
 
         if (metadataElement != null) {
             var namespaceURI = metadataElement.getNamespaceURI();
-            return DDIVersion.fromNamespace(namespaceURI);
+            if (namespaceURI != null) {
+                return DDIVersion.fromNamespace(namespaceURI);
+            }
         }
 
         return null;
@@ -314,8 +311,7 @@ public class Validator {
                         // Configure the MDC context
                         MDC.setContextMap(mdc);
                         return validateFile(repo, path, recordCounter, invalidRecordsCounter);
-                    },
-                    executor
+                    }
                 ).exceptionally(e -> {
                     log.error("{}: Validation of {} failed", repo.code(), path, e);
                     return null;
@@ -397,7 +393,7 @@ public class Validator {
                 invalidRecordsCounter.incrementAndGet();
             }
 
-        } catch (NotDocumentException | SAXException | IOException e) {
+        } catch (NotDocumentException | SAXException | IOException | IllegalStateException e) {
             // Handle invalid DDI document
             log.warn("{}: Validation of {} failed: {}", repo.code(), file, e.toString());
 
