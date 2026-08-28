@@ -51,6 +51,13 @@
     </properties>
 
     <dependencies>
+        <!-- Xalan -->
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+
         <!-- Xerces -->
         <dependency>
             <groupId>xerces</groupId>

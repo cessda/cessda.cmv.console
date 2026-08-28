@@ -54,7 +54,7 @@ public class Validator {
 
     private static final Logger log = LoggerFactory.getLogger(Validator.class);
 
-    private static final int MAX_FILE_SIZE_MB = 10;
+    private static final int MAX_FILE_SIZE_MB = 50;
 
     // Logging constants
     private static final String MDC_KEY = "validator_job";

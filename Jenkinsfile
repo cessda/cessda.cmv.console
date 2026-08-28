@@ -63,34 +63,12 @@ pipeline {
                 }
             }
         }
-        stage('Compile Native Image') {
-            agent {
-                docker {
-                    image 'graalvm/native-image-community:25'
-                    args '--entrypoint=\'\''
-                    registryUrl 'https://ghcr.io/'
-                    registryCredentialsId '699b8178-5d52-46a1-aaad-ddb5b0a4069f'
-                    reuseNode true
-                }
-            }
-            environment {
-                HOME = "${WORKSPACE_TMP}"
-            }
-            steps {
-                sh "./mvnw -Pnative native:compile-no-fork -DbuildNumber=${env.BUILD_NUMBER}"
-            }
-            when { branch 'main' }
-        }
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t ${imageTag} ."
-            }
-            when { branch 'main' }
-        }
 		stage('Push Docker image') {
             steps {
                 sh "gcloud auth configure-docker ${ARTIFACT_REGISTRY_HOST}"
-                sh "docker push ${imageTag}"
+                withMaven {
+                    sh "./mvnw jib:build -Dimage=${imageTag}"
+                }
                 sh "gcloud artifacts docker tags add ${imageTag} ${DOCKER_ARTIFACT_REGISTRY}/${productName}-${componentName}:${env.BRANCH_NAME}-latest"
             }
             when { branch 'main' }
