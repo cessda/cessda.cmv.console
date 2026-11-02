@@ -4,5 +4,5 @@
     <logger name="eu.cessda.cmv.core" level="WARN"/>
 
     <!-- Default log level -->
-    <root level="INFO"/>
+    <root level="WARN"/>
 </configuration>
